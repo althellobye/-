@@ -1,11 +1,11 @@
 {
-  "name": "₍^˶ ╸𖥦 ╸˵^₎⟆♡",
+  "name": "🍒 ₍^˶ ╸𖥦 ╸˵^₎⟆♡ · Cherry",
   "short_name": "Cherry",
-  "description": "學習、日記、健康管理",
+  "description": "學習 · 日記 · 健康",
   "start_url": "/-/",
   "display": "standalone",
-  "background_color": "#f0f8ff",
-  "theme_color": "#8ab3d0",
+  "background_color": "#fce9f0",
+  "theme_color": "#d48a9e",
   "orientation": "portrait",
   "icons": [
     {
