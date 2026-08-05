@@ -35,7 +35,7 @@
         .token-area {
             display: flex;
             gap: 6px;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
             background: white;
             padding: 6px 12px;
@@ -72,6 +72,31 @@
         }
         .token-status.ok { background: #d4edda; color: #155724; }
         .token-status.no { background: #f8d7da; color: #721c24; }
+        .token-status.sync { background: #fff3cd; color: #856404; }
+
+        .upload-area {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .upload-area .upload-btn {
+            background: #8ab3d0;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .upload-area .upload-btn:active { transform: scale(0.94); }
+        .upload-area .upload-btn input { display: none; }
+        .upload-area .photo-count {
+            font-size: 0.75rem;
+            color: #6a8a9a;
+        }
 
         .photo-strip {
             display: flex;
@@ -121,20 +146,6 @@
             line-height: 18px;
             text-align: center;
         }
-        .photo-strip .upload-btn-sm {
-            flex: 0 0 56px;
-            height: 56px;
-            border-radius: 12px;
-            border: 2px dashed #c8dce8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.6rem;
-            cursor: pointer;
-            background: white;
-            color: #8ab3d0;
-        }
-        .photo-strip .upload-btn-sm input { display: none; }
 
         .main-tabs {
             display: flex;
@@ -239,6 +250,7 @@
         .cal-grid .day {
             aspect-ratio: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             border-radius: 10px;
@@ -248,15 +260,24 @@
             border: 1px solid transparent;
             position: relative;
             font-weight: 500;
+            padding: 2px;
+            min-height: 40px;
         }
-        .cal-grid .day.has::after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            width: 6px;
-            height: 6px;
-            background: #8ab3d0;
-            border-radius: 50%;
+        .cal-grid .day .event-dot {
+            font-size: 0.5rem;
+            color: #8ab3d0;
+            line-height: 1;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .cal-grid .day .event-dot.has {
+            color: #8ab3d0;
+        }
+        .cal-grid .day .event-dot.more {
+            color: #b0c0d0;
+            font-size: 0.45rem;
         }
         .cal-grid .day.other { color: #b0c0d0; }
         .cal-grid .day:active { transform: scale(0.9); }
@@ -373,7 +394,6 @@
         }
         .weather-options button:active, .mood-options button:active { transform: scale(0.92); }
 
-        /* 貼紙彈窗 */
         .sticker-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -400,22 +420,43 @@
             70% { transform: scale(1.1); }
             100% { transform: scale(1); opacity: 1; }
         }
+        .sync-notice {
+            font-size: 0.65rem;
+            color: #8a9aaa;
+            text-align: center;
+            padding: 4px;
+            margin-top: 6px;
+            background: #f0f5fa;
+            border-radius: 30px;
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
     <div class="title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
 
+    <!-- Token -->
     <div class="token-area">
         <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" value="">
         <button class="btn-use" id="useTokenBtn">🔑 使用</button>
         <span class="token-status no" id="tokenStatus">未設定</span>
     </div>
 
-    <div class="photo-strip" id="photoStrip">
-        <div class="empty">📸 上傳照片顯示在這裡</div>
+    <!-- 上傳按鈕 -->
+    <div class="upload-area">
+        <label class="upload-btn" id="uploadBtn">
+            📸 上傳照片
+            <input type="file" id="photoInput" accept="image/*">
+        </label>
+        <span class="photo-count" id="photoCount">0 張照片</span>
     </div>
 
+    <!-- 照片橫條 -->
+    <div class="photo-strip" id="photoStrip">
+        <div class="empty">📸 還沒有照片，點上方上傳</div>
+    </div>
+
+    <!-- 主選單 -->
     <div class="main-tabs">
         <button class="active" data-tab="study">📚 學習</button>
         <button data-tab="diary">📖 日記</button>
@@ -423,12 +464,14 @@
     </div>
 
     <div class="panel" id="panel"></div>
+
+    <div class="sync-notice">💡 同一 Token 在不同裝置可同步資料</div>
 </div>
 
 <script>
 (function() {
-    const STORE_KEY = 'cherry_data_v4';
-    const TOKEN_KEY = 'cherry_token_v4';
+    const STORE_KEY = 'cherry_data_v5';
+    const TOKEN_KEY = 'cherry_token_v5';
 
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
@@ -472,9 +515,11 @@
     const tokenInput = document.getElementById('tokenInput');
     const tokenStatus = document.getElementById('tokenStatus');
     const photoStrip = document.getElementById('photoStrip');
+    const photoCount = document.getElementById('photoCount');
     const panel = document.getElementById('panel');
     tokenInput.value = store.token || '';
 
+    // Token 使用
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
         if (!t) { alert('請輸入 Token'); return; }
@@ -483,7 +528,8 @@
         localStorage.setItem(TOKEN_KEY, t);
         save();
         updateTokenStatus();
-        alert('✅ Token 已設定！');
+        alert('✅ Token 已設定！資料可在同 Token 裝置間同步');
+        renderMain();
     });
 
     function updateTokenStatus() {
@@ -494,11 +540,12 @@
     }
     updateTokenStatus();
 
-    // ===== 照片 =====
+    // ===== 照片管理 =====
     function renderPhotoStrip() {
         const photos = store.photos || [];
+        photoCount.textContent = `${photos.length} 張照片`;
         if (photos.length === 0) {
-            photoStrip.innerHTML = `<div class="empty">📸 上傳照片顯示在這裡</div>`;
+            photoStrip.innerHTML = `<div class="empty">📸 還沒有照片，點上方上傳</div>`;
             return;
         }
         let html = '';
@@ -508,25 +555,23 @@
                 <button class="del-photo" onclick="window._delPhoto(${i})">✕</button>
             </div>`;
         });
-        html += `<div class="upload-btn-sm" onclick="document.getElementById('photoInput').click()">
-            ＋
-            <input type="file" id="photoInput" accept="image/*">
-        </div>`;
         photoStrip.innerHTML = html;
-        document.getElementById('photoInput')?.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
-                save();
-                renderPhotoStrip();
-                renderMain();
-            };
-            reader.readAsDataURL(file);
-            this.value = '';
-        });
     }
+
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
+            save();
+            renderPhotoStrip();
+            renderMain();
+        };
+        reader.readAsDataURL(file);
+        this.value = '';
+    });
+
     window._delPhoto = function(idx) {
         if (!confirm('刪除這張照片嗎？')) return;
         store.photos.splice(idx, 1);
@@ -540,7 +585,7 @@
     };
     renderPhotoStrip();
 
-    // ===== 貼紙彈窗 =====
+    // ===== 貼紙 =====
     function showSticker(emoji, text) {
         const overlay = document.createElement('div');
         overlay.className = 'sticker-overlay';
@@ -661,6 +706,16 @@
         const first = new Date(y,m,1).getDay();
         const days = new Date(y,m+1,0).getDate();
 
+        // 收集當月所有行程
+        const monthEvents = {};
+        store.study.calendar.forEach(e => {
+            const parts = e.date.split('-');
+            if (parts.length === 3 && parseInt(parts[0]) === y && parseInt(parts[1]) === m+1) {
+                if (!monthEvents[parts[2]]) monthEvents[parts[2]] = [];
+                monthEvents[parts[2]].push(e.content);
+            }
+        });
+
         let html = `<div class="flex-row">
             <span style="font-weight:600;">${y}年${m+1}月</span>
             <button class="btn btn-sm" onclick="window._addEvent()">➕ 新增行程</button>
@@ -670,8 +725,18 @@
         for (let i=0; i<first; i++) html += `<div class="day other"></div>`;
         for (let d=1; d<=days; d++) {
             const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const has = store.study.calendar.some(e => e.date === ds);
-            html += `<div class="day ${has?'has':''}" onclick="window._showDay('${ds}')">${d}</div>`;
+            const events = monthEvents[String(d)] || [];
+            const has = events.length > 0;
+            let dotHtml = '';
+            if (has) {
+                const display = events.slice(0, 2);
+                dotHtml = `<span class="event-dot has">${display.join(' • ')}</span>`;
+                if (events.length > 2) dotHtml += `<span class="event-dot more">+${events.length-2}...</span>`;
+            }
+            html += `<div class="day ${has?'has':''}" onclick="window._showDay('${ds}')">
+                ${d}
+                ${dotHtml}
+            </div>`;
         }
         html += `</div><div id="dayEvents">`;
         const todayStr = `${y}-${String(m+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -713,13 +778,13 @@
         if (idx > -1) { store.study.calendar.splice(idx,1); save(); renderMain(); }
     };
 
-    // ----- 備忘錄 -----
+    // ----- 備忘錄（無圓圈）-----
     function renderTodos() {
         const todos = store.study.todos || [];
         let html = `<button class="btn" onclick="window._addTodo()">➕ 新增待辦</button>`;
         if (!todos.length) html += `<div class="text-muted" style="padding:8px 0;">✨ 沒有待辦事項</div>`;
         todos.forEach((t,i) => {
-            html += `<div class="record-card">${t.done?'✅':'⭕'} ${t.text} <button class="btn btn-sm ${t.done?'btn-success':''} right" onclick="window._toggleTodo(${i})">${t.done?'↩️':'✅'}</button></div>`;
+            html += `<div class="record-card">${t.text} <button class="btn btn-sm ${t.done?'btn-success':''} right" onclick="window._toggleTodo(${i})">${t.done?'✅ 完成':'⬜ 標記完成'}</button></div>`;
         });
         return html;
     }
@@ -745,7 +810,7 @@
 
     // ----- 成績 -----
     function renderGrades() {
-        const semesters = ACTIVE_SEMESTERS;
+        const semesters = Object.keys(store.study.grades).sort();
         const sem = currentSemester;
         const sub = currentSubject;
 
@@ -793,7 +858,6 @@
             if (store.study.grades[result.name]) { alert('學段已存在'); return; }
             store.study.grades[result.name] = {};
             currentSemester = result.name;
-            ACTIVE_SEMESTERS.push(result.name);
             save();
             renderMain();
         });
@@ -818,7 +882,6 @@
             records.push({ date: result.date, score, note: result.note || '' });
             save();
             renderMain();
-            // 貼紙彈窗
             if (prev !== null) {
                 if (score > prev) showSticker('🎉', '進步了！繼續加油！');
                 else if (score < prev) showSticker('💪', '退步了，下次加油！');
@@ -949,7 +1012,6 @@
                 const prev = records[i-1];
                 const curVal = STATUS_ORDER[r.status] || 2;
                 const prevVal = STATUS_ORDER[prev.status] || 2;
-                // 只有往正常方向移動才是進步
                 if (curVal > prevVal) encourage = '🌟進步！';
                 else if (curVal < prevVal) encourage = '⚠️ 注意健康';
             }
@@ -962,7 +1024,6 @@
 
     window._addBMI = function() {
         if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
-        // 輸入不用密碼
         showModal('記錄健康程度', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'height', label: '身高 (cm)', type: 'number', placeholder: '輸入身高' },
@@ -982,7 +1043,6 @@
             records.push({ date: result.date, height: h, weight: w, bmi: bmi.toFixed(1), status });
             save();
             window._showBMI();
-            // 貼紙
             if (prev) {
                 const prevVal = STATUS_ORDER[prev] || 2;
                 const curVal = STATUS_ORDER[status] || 2;
@@ -1033,7 +1093,22 @@
     };
     window._waterHistory = function() {
         const h = store.health.water.history || [];
-        alert('📋 喝水歷史\n' + (h.length ? h.map(x => `${x.date} : ${x.cups}杯`).join('\n') : '尚無歷史'));
+        let msg = '📋 喝水歷史\n';
+        h.forEach(x => msg += `${x.date} : ${x.cups}杯\n`);
+        msg += '\n💡 點擊日期可修改';
+        alert(msg);
+        // 簡單修改功能
+        const idx = prompt('要修改第幾筆？(輸入數字，從0開始)');
+        if (idx !== null && !isNaN(idx) && h[parseInt(idx)]) {
+            const newDate = prompt('新日期 (YYYY-MM-DD)', h[parseInt(idx)].date);
+            const newCups = parseInt(prompt('新杯數 (0-8)', h[parseInt(idx)].cups));
+            if (newDate && !isNaN(newCups) && newCups >= 0 && newCups <= 8) {
+                h[parseInt(idx)].date = newDate;
+                h[parseInt(idx)].cups = newCups;
+                save();
+                window._waterHistory();
+            }
+        }
     };
 
     window._showExercise = function() {
@@ -1070,6 +1145,7 @@
     // ===== 初始化 =====
     renderMain();
 
+    // 每日喝水重置
     setInterval(() => {
         const today = new Date().toISOString().slice(0,10);
         if (store.health.water.today.date !== today) {
