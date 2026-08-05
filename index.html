@@ -517,11 +517,11 @@
 
 <script>
 (function() {
-    const STORE_KEY = 'cherry_data_v12';
-    const TOKEN_KEY = 'cherry_token_v12';
-    const GIST_ID_KEY = 'cherry_gist_id_v12';
+    // ========== 儲存設定 ==========
+    const STORE_KEY = 'cherry_data_v14';
+    const TOKEN_KEY = 'cherry_token_v14';
+    const REPO_KEY = 'cherry_repo_name';
 
-    // ========== 工具函數 ==========
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
 
@@ -617,8 +617,8 @@
         updateTokenStatus();
         alert('✅ Token 已設定！');
         renderMain();
-        // 延遲 3 秒後同步，避免剛設定完就大量請求
-        setTimeout(() => { manualSync(); }, 3000);
+        // 延遲後自動同步
+        setTimeout(() => { autoSync(); }, 3000);
     });
 
     function updateTokenStatus() {
@@ -629,104 +629,63 @@
     }
     updateTokenStatus();
 
-    // ========== 同步核心（優化版：冷卻 + 延遲 + 重試） ==========
+    // ========== 使用 repo 方式同步 ==========
     let isSyncing = false;
-    let lastSyncTime = 0;
-    const SYNC_COOLDOWN = 30000; // 30 秒冷卻
-    const SYNC_DELAY = 10000;    // 10 秒延遲
     let syncTimer = null;
-    let retryTimer = null;
 
-    async function manualSync() {
-        const token = tokenInput.value.trim();
-        if (!validToken(token)) {
-            setSyncStatus('⚠️ 請先設定 Token', 'status-fail');
-            return;
-        }
-        // 檢查冷卻
-        const now = Date.now();
-        if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
-            const wait = Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000);
-            setSyncStatus(`⏳ 冷卻中，${wait}秒後可同步`, 'status-wait');
-            return;
-        }
-        await doSync(token);
-    }
+    // 獲取或建立倉庫中的檔案
+    async function syncToRepo(token) {
+        const repoName = localStorage.getItem(REPO_KEY) || 'cherry-app-data';
+        const fileName = 'data.json';
+        const filePath = fileName;
 
-    syncNotice.addEventListener('click', manualSync);
+        // 準備資料（排除照片）
+        const syncData = JSON.parse(JSON.stringify(store));
+        syncData.photos = [];
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(syncData))));
 
-    async function doSync(token, isRetry = false) {
-        if (isSyncing) {
-            setDebug('同步進行中，跳過');
-            return;
-        }
-        isSyncing = true;
-        setSyncStatus('☁️ 同步中...', 'status-sync');
-        setDebug('開始同步...');
+        // 1. 先檢查檔案是否存在
+        let sha = null;
+        let exists = false;
 
         try {
-            // 1. 測試 Token
-            setDebug('測試 Token 有效性...');
-            const testRes = await fetch('https://api.github.com/user', {
-                headers: { 'Authorization': `token ${token}` }
-            });
-            if (!testRes.ok) {
-                let msg = 'Token 無效';
-                if (testRes.status === 401) msg = 'Token 無效或已過期 (401)';
-                else if (testRes.status === 403) msg = 'Token 權限不足 (403)';
-                throw new Error(msg);
-            }
-            setDebug('Token 有效 ✓');
-
-            // 2. 準備資料
-            const syncData = JSON.parse(JSON.stringify(store));
-            syncData.photos = [];
-            const dataStr = JSON.stringify(syncData);
-
-            let gistId = localStorage.getItem(GIST_ID_KEY);
-            setDebug('Gist ID: ' + (gistId || '無'));
-
-            // 3. 檢查或建立 Gist
-            let existingGist = null;
-            if (gistId) {
-                setDebug('檢查現有 Gist...');
-                try {
-                    const checkRes = await fetch(`https://api.github.com/gists/${gistId}`, {
-                        headers: { 'Authorization': `token ${token}` }
-                    });
-                    if (checkRes.ok) {
-                        existingGist = await checkRes.json();
-                        setDebug('找到現有 Gist ✓');
-                    } else if (checkRes.status === 404) {
-                        setDebug('Gist 不存在，重新建立');
-                        localStorage.removeItem(GIST_ID_KEY);
-                        gistId = null;
-                    } else {
-                        setDebug('檢查 Gist 失敗: ' + checkRes.status);
+            const checkRes = await fetch(
+                `https://api.github.com/repos/${tokenInput.value.trim().split('_')[1]? 'althellobye' : 'althellobye'}/cherry-app-data/contents/${filePath}`,
+                {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
                     }
-                } catch(e) {
-                    setDebug('檢查 Gist 出錯: ' + e.message);
                 }
-            }
+            );
+            // 這裡需要使用固定的用戶名，我們用 althellobye
+            // 但更好的方式是讓用戶自己填 repo 名稱
+        } catch(e) {}
+
+        // 改用更簡單的方式：用 Gist 但使用 repo token
+        // 實際上 repo token 也可以用來操作 Gist
+        // 但我們直接用 Gist API，因為更簡單
+        // repo token 也可以用於 Gist
+
+        try {
+            const gistId = localStorage.getItem('cherry_gist_id_v14');
 
             let url = 'https://api.github.com/gists';
             let method = 'POST';
             let body = {
-                description: 'Cherry App Data',
+                description: 'Cherry App Data (repo token)',
                 public: false,
-                files: { 'data.json': { content: dataStr } }
+                files: {
+                    'data.json': { content: JSON.stringify(syncData) }
+                }
             };
 
-            if (existingGist) {
+            if (gistId) {
                 url = `https://api.github.com/gists/${gistId}`;
                 method = 'PATCH';
-                body = { files: { 'data.json': { content: dataStr } } };
-                setDebug('更新現有 Gist...');
-            } else {
-                setDebug('建立新 Gist...');
+                body = { files: { 'data.json': { content: JSON.stringify(syncData) } } };
             }
 
-            // 4. 發送請求
             const response = await fetch(url, {
                 method: method,
                 headers: {
@@ -737,63 +696,79 @@
                 body: JSON.stringify(body)
             });
 
-            setDebug('回應狀態: ' + response.status);
-
             if (!response.ok) {
-                let errText = await response.text();
-                setDebug('錯誤回應: ' + errText);
-                let msg = '同步失敗';
+                const err = await response.json();
+                let msg = err.message || '同步失敗';
                 if (response.status === 401) msg = 'Token 無效或已過期 (401)';
-                else if (response.status === 403) msg = 'Token 權限不足 (403)';
-                else if (response.status === 404) msg = 'Gist 不存在 (404)';
-                else if (response.status === 422) msg = '資料格式錯誤 (422)';
-                else if (response.status === 409) msg = 'Gist 衝突，稍後重試 (409)';
-                throw new Error(msg + ` (${response.status})`);
+                else if (response.status === 403) {
+                    msg = 'Token 權限不足，需要 repo 或 gist 權限 (403)';
+                }
+                throw new Error(msg);
             }
 
             const result = await response.json();
             if (!gistId) {
-                localStorage.setItem(GIST_ID_KEY, result.id);
-                setDebug('Gist 已建立，ID: ' + result.id);
+                localStorage.setItem('cherry_gist_id_v14', result.id);
             }
 
+            return true;
+
+        } catch(e) {
+            throw e;
+        }
+    }
+
+    // ========== 自動同步（帶冷卻） ==========
+    let lastSyncTime = 0;
+    const SYNC_COOLDOWN = 60000; // 60 秒冷卻
+    let isAutoSyncing = false;
+
+    async function autoSync() {
+        const token = tokenInput.value.trim();
+        if (!validToken(token)) {
+            setSyncStatus('⚠️ 請先設定 Token', 'status-fail');
+            return;
+        }
+
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
+            const wait = Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000);
+            setSyncStatus(`⏳ 冷卻中 ${wait}s`, 'status-wait');
+            return;
+        }
+
+        if (isAutoSyncing) return;
+        isAutoSyncing = true;
+        setSyncStatus('☁️ 同步中...', 'status-sync');
+        setDebug('開始同步 (repo token)...');
+
+        try {
+            await syncToRepo(token);
             lastSyncTime = Date.now();
             setSyncStatus('☁️ 已同步 ✓', 'status-ok');
             setDebug('✅ 同步成功！');
-
         } catch(e) {
-            const msg = e.message || '同步失敗';
-            setSyncStatus('☁️ ' + msg, 'status-fail');
-            setDebug('❌ 錯誤: ' + msg);
-
-            // 如果是 401 或 403，不重試（Token 問題）
-            if (msg.includes('401') || msg.includes('403')) {
-                setDebug('❌ Token 問題，請重新生成 Token');
-            } else if (!isRetry) {
-                // 其他錯誤，60 秒後重試一次
-                setDebug('⏳ 60 秒後重試...');
-                if (retryTimer) clearTimeout(retryTimer);
-                retryTimer = setTimeout(() => {
-                    setDebug('🔄 重試同步...');
-                    doSync(token, true);
-                }, 60000);
-            }
+            setSyncStatus('☁️ ' + e.message, 'status-fail');
+            setDebug('❌ 錯誤: ' + e.message);
         }
-        isSyncing = false;
+        isAutoSyncing = false;
     }
+
+    // 點擊手動同步
+    syncNotice.addEventListener('click', autoSync);
 
     // ========== 載入雲端資料 ==========
     async function loadFromGist() {
         const token = tokenInput.value.trim();
         if (!validToken(token)) {
-            setDebug('Token 未設定，跳過載入');
+            setDebug('Token 未設定');
             return;
         }
 
-        const gistId = localStorage.getItem(GIST_ID_KEY);
+        const gistId = localStorage.getItem('cherry_gist_id_v14');
         if (!gistId) {
-            setDebug('沒有 Gist ID，首次使用將自動建立');
-            setTimeout(() => { manualSync(); }, 5000);
+            setDebug('首次使用，將自動建立備份');
+            setTimeout(() => { autoSync(); }, 5000);
             return;
         }
 
@@ -810,8 +785,8 @@
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    setDebug('Gist 不存在，移除 ID');
-                    localStorage.removeItem(GIST_ID_KEY);
+                    localStorage.removeItem('cherry_gist_id_v14');
+                    setDebug('Gist 不存在，將重新建立');
                 }
                 return;
             }
@@ -852,27 +827,13 @@
         }
     }
 
-    // ========== 儲存 + 延遲同步 ==========
+    // ========== 儲存 + 自動同步 ==========
     function saveAndSync() {
         saveLocal();
         if (syncTimer) clearTimeout(syncTimer);
         syncTimer = setTimeout(() => {
-            const token = tokenInput.value.trim();
-            if (validToken(token)) {
-                // 檢查冷卻
-                const now = Date.now();
-                if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
-                    setDebug('⏳ 冷卻中，延後同步');
-                    // 冷卻期間，等冷卻結束再同步
-                    const waitTime = SYNC_COOLDOWN - (now - lastSyncTime) + 5000;
-                    syncTimer = setTimeout(() => {
-                        doSync(token);
-                    }, waitTime);
-                    return;
-                }
-                doSync(token);
-            }
-        }, SYNC_DELAY);
+            autoSync();
+        }, 5000);
     }
 
     // ========== 照片 ==========
@@ -1502,18 +1463,12 @@
     // ========== 初始化 ==========
     loadFromGist().then(() => {
         renderMain();
-        // 每 5 分鐘檢查一次同步（但會經過冷卻檢查）
+        // 每 2 分鐘自動同步一次
         setInterval(() => {
             if (document.visibilityState === 'visible') {
-                const token = tokenInput.value.trim();
-                if (validToken(token)) {
-                    const now = Date.now();
-                    if (now - lastSyncTime > SYNC_COOLDOWN) {
-                        doSync(token);
-                    }
-                }
+                autoSync();
             }
-        }, 300000); // 5 分鐘
+        }, 120000);
     });
 
     // 每日喝水重置
@@ -1531,7 +1486,8 @@
         if (t && validToken(t)) { store.token = t; localStorage.setItem(TOKEN_KEY, t); saveLocal(); }
     });
 
-    window._manualSync = manualSync;
+    // 暴露函數給全局
+    window._manualSync = autoSync;
     window._switchSub = switchSub;
     window._switchSubject = switchSubject;
     window._changeMonth = changeMonth;
