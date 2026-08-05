@@ -1,0 +1,22 @@
+{
+  "token": "",
+  "study": {
+    "calendar": [],
+    "todos": [],
+    "grades": {}
+  },
+  "diary": {
+    "entries": []
+  },
+  "health": {
+    "bmiRecords": [],
+    "water": {
+      "today": {
+        "date": "",
+        "cups": 0
+      },
+      "history": []
+    },
+    "exercises": []
+  }
+}
