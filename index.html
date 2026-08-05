@@ -3,126 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>₍^˶ ╸𖥦 ╸˵^₎⟆♡</title>
+    <title>🍒 ₍^˶ ╸𖥦 ╸˵^₎⟆♡ · Cherry</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23fce9f0'/%3E%3Ccircle cx='38' cy='40' r='12' fill='%23e85a6f'/%3E%3Ccircle cx='62' cy='40' r='12' fill='%23e85a6f'/%3E%3Cpath d='M30 55 Q50 75 70 55' stroke='%236a8c5a' stroke-width='6' fill='none' stroke-linecap='round' /%3E%3C/svg%3E">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background: linear-gradient(145deg, #f0f8ff 0%, #fce9f0 100%); min-height: 100vh; padding: 12px; display: flex; justify-content: center; }
-        .app { max-width: 480px; width: 100%; background: rgba(255,248,250,0.92); backdrop-filter: blur(10px); border-radius: 32px; padding: 16px; box-shadow: 0 12px 40px rgba(130,160,200,0.15); border: 1px solid rgba(255,255,255,0.5); }
-        .title { text-align: center; font-size: 1.8rem; font-weight: 300; color: #5a7a8a; margin-bottom: 10px; }
-        .token-area { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; background: white; padding: 6px 12px; border-radius: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); align-items: center; }
-        .token-area input { flex: 1; min-width: 100px; border: none; padding: 8px 4px; font-size: 0.8rem; font-family: monospace; outline: none; background: transparent; }
-        .token-area .btn-use { background: #8ab3d0; color: white; border: none; padding: 5px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-        .token-area .btn-use:active { transform: scale(0.94); }
-        .token-status { font-size: 0.6rem; padding: 3px 10px; border-radius: 30px; }
-        .token-status.ok { background: #d4edda; color: #155724; }
-        .token-status.no { background: #f8d7da; color: #721c24; }
+        body {
+            background: linear-gradient(145deg, #fce9f0 0%, #f0f8ff 100%);
+            min-height: 100vh;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .app {
+            max-width: 480px;
+            width: 100%;
+            background: rgba(255, 248, 250, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 20px 18px 24px;
+            box-shadow: 0 20px 60px rgba(180, 100, 130, 0.15), 0 4px 12px rgba(180, 100, 130, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
 
-        .upload-area { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
-        .upload-area .upload-btn { background: #8ab3d0; color: white; border: none; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; cursor: pointer; }
+        .title-wrap {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px dashed rgba(200, 180, 190, 0.25);
+        }
+        .title-wrap .cherry-icon { font-size: 2.2rem; display: block; margin-bottom: 2px; }
+        .title-wrap .main-title { font-size: 1.3rem; font-weight: 600; color: #5a4a55; letter-spacing: 1px; }
+        .title-wrap .sub-title { font-size: 0.7rem; color: #a08a98; font-weight: 300; letter-spacing: 4px; margin-top: 2px; }
+
+        .token-area {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 4px 12px 4px 16px;
+            border-radius: 60px;
+            box-shadow: 0 2px 12px rgba(180, 100, 130, 0.06);
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .token-area input {
+            flex: 1;
+            min-width: 60px;
+            border: none;
+            padding: 10px 2px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            outline: none;
+            background: transparent;
+            color: #4a3a45;
+        }
+        .token-area input::placeholder { color: #bbaab5; font-family: system-ui; }
+        .token-area .btn-use {
+            background: linear-gradient(135deg, #d48a9e, #c07a8e);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(200, 120, 150, 0.25);
+        }
+        .token-area .btn-use:active { transform: scale(0.94); }
+        .token-area .btn-sync {
+            background: linear-gradient(135deg, #8ac4a0, #70b088);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(120, 180, 140, 0.25);
+            white-space: nowrap;
+        }
+        .token-area .btn-sync:active { transform: scale(0.94); }
+        .token-status {
+            font-size: 0.55rem;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .token-status.ok { background: #d4edda; color: #2d6a3a; }
+        .token-status.no { background: #f8d7da; color: #8a3a3a; }
+        .token-status.syncing { background: #fff3cd; color: #856404; }
+
+        .upload-area {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .upload-area .upload-btn {
+            background: linear-gradient(135deg, #b8d4e8, #a0c4d8);
+            color: white;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(160, 180, 210, 0.2);
+        }
         .upload-area .upload-btn:active { transform: scale(0.94); }
         .upload-area .upload-btn input { display: none; }
-        .upload-area .photo-count { font-size: 0.75rem; color: #6a8a9a; }
+        .upload-area .photo-count { font-size: 0.7rem; color: #8a7a85; font-weight: 300; }
 
-        .photo-strip { display: flex; gap: 12px; padding: 10px; margin-bottom: 10px; background: #f5f9fe; border-radius: 16px; min-height: 180px; align-items: center; justify-content: center; border: 2px dashed #dce8f0; flex-direction: column; }
-        .photo-strip .empty { color: #aab8c8; font-size: 0.9rem; text-align: center; }
-        .photo-strip .photo-item { max-width: 100%; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #dcebf5; }
-        .photo-strip .photo-item img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
+        .photo-strip {
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            min-height: 160px;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(200, 180, 190, 0.3);
+            flex-direction: column;
+            transition: 0.3s;
+        }
+        .photo-strip .empty { color: #b0a0aa; font-size: 0.8rem; text-align: center; }
+        .photo-strip .photo-item { max-width: 100%; width: 100%; border-radius: 16px; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.6); box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+        .photo-strip .photo-item img { width: 100%; max-height: 280px; object-fit: contain; display: block; }
 
-        .main-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
-        .main-tabs button { flex: 1; padding: 10px 0; border: none; border-radius: 60px; font-weight: 600; font-size: 0.85rem; background: #eef4f9; color: #4a6a7a; cursor: pointer; transition: 0.15s; border: 1px solid transparent; }
-        .main-tabs button.active { background: #8ab3d0; color: white; box-shadow: 0 4px 12px #8ab3d066; }
+        .main-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+        .main-tabs button {
+            flex: 1; padding: 10px 0; border: none; border-radius: 60px; font-weight: 600;
+            font-size: 0.8rem; background: rgba(240, 235, 238, 0.5); color: #6a5a65;
+            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .main-tabs button.active {
+            background: linear-gradient(135deg, #d48a9e, #c07a8e);
+            color: white; box-shadow: 0 4px 16px rgba(200, 120, 150, 0.25);
+        }
         .main-tabs button:active { transform: scale(0.94); }
 
-        .panel { background: #fafdff; border-radius: 24px; padding: 14px; min-height: 380px; border: 1px solid #e8f0f8; }
+        .panel {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            padding: 14px;
+            min-height: 350px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(4px);
+        }
 
         .sub-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
-        .sub-tabs button { padding: 5px 14px; border: none; border-radius: 40px; font-size: 0.78rem; background: #eef4f9; color: #4a6a7a; cursor: pointer; border: 1px solid transparent; }
-        .sub-tabs button.active { background: #8ab3d0; color: white; }
+        .sub-tabs button {
+            padding: 4px 14px; border: none; border-radius: 40px; font-size: 0.7rem;
+            background: rgba(240, 235, 238, 0.4); color: #6a5a65; cursor: pointer;
+            border: 1px solid transparent; transition: 0.15s;
+        }
+        .sub-tabs button.active { background: rgba(200, 120, 150, 0.15); color: #8a5a6a; border-color: rgba(200, 120, 150, 0.2); }
 
-        .btn { padding: 6px 18px; border: none; border-radius: 60px; font-weight: 500; font-size: 0.8rem; cursor: pointer; color: white; background: #8ab3d0; box-shadow: 0 2px 8px #8ab3d066; }
+        .btn {
+            padding: 6px 18px; border: none; border-radius: 60px; font-weight: 500;
+            font-size: 0.75rem; cursor: pointer; transition: 0.15s; color: white;
+            background: linear-gradient(135deg, #b8d4e8, #a0c4d8);
+            box-shadow: 0 4px 12px rgba(160, 180, 210, 0.15);
+        }
         .btn:active { transform: scale(0.94); }
-        .btn-danger { background: #d48a8a; box-shadow: 0 2px 8px #d48a8a66; }
-        .btn-success { background: #6fbf8a; box-shadow: 0 2px 8px #6fbf8a66; }
-        .btn-sm { padding: 3px 12px; font-size: 0.7rem; }
+        .btn-danger { background: linear-gradient(135deg, #d48a8a, #c07a7a); box-shadow: 0 4px 12px rgba(200, 120, 120, 0.2); }
+        .btn-success { background: linear-gradient(135deg, #8ac4a0, #70b088); box-shadow: 0 4px 12px rgba(120, 180, 140, 0.2); }
+        .btn-sm { padding: 3px 12px; font-size: 0.65rem; }
 
         .flex-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 4px 0; }
-        .record-card { background: white; border-radius: 16px; padding: 8px 12px; margin: 4px 0; box-shadow: 0 1px 6px #d0e0ec; font-size: 0.85rem; }
+        .record-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 8px 12px;
+            margin: 4px 0;
+            box-shadow: 0 1px 8px rgba(180, 160, 170, 0.06);
+            font-size: 0.82rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
         .record-card .right { float: right; margin-left: 4px; }
-        input, select, textarea { background: white; border: 1px solid #dce8f0; border-radius: 30px; padding: 8px 14px; font-size: 0.85rem; width: 100%; outline: none; }
-        input:focus, select:focus, textarea:focus { border-color: #8ab3d0; }
+
+        input, select, textarea {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(200, 180, 190, 0.2);
+            border-radius: 30px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            width: 100%;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: rgba(200, 120, 150, 0.3); box-shadow: 0 0 0 3px rgba(200, 120, 150, 0.05); }
         textarea { border-radius: 16px; min-height: 50px; resize: vertical; }
 
         .cal-nav { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px 0; }
-        .cal-nav .month-label { font-size: 1rem; font-weight: 600; color: #4a6a7a; }
-        .cal-nav button { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px 12px; border-radius: 30px; background: #eef4f9; }
+        .cal-nav .month-label { font-size: 0.95rem; font-weight: 600; color: #5a4a55; }
+        .cal-nav button { background: rgba(240, 235, 238, 0.4); border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 14px; border-radius: 30px; transition: 0.15s; }
         .cal-nav button:active { transform: scale(0.9); }
 
         .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin: 4px 0; }
-        .cal-grid .wk { font-weight: 600; color: #5a7a8a; font-size: 0.65rem; text-align: center; padding: 4px 0; }
-        .cal-grid .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border-radius: 10px; font-size: 0.7rem; background: #f4f8fc; cursor: pointer; border: 1px solid transparent; padding: 3px 2px; min-height: 44px; text-align: center; line-height: 1.2; position: relative; overflow: hidden; }
-        .cal-grid .day .day-number { font-size: 0.85rem; font-weight: 600; }
-        .cal-grid .day .event-text { font-size: 0.45rem; color: #8ab3d0; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; font-weight: 600; width: 100%; }
-        .cal-grid .day .event-text.more { color: #b0c0d0; font-size: 0.4rem; }
-        .cal-grid .day.other { color: #b0c0d0; }
-        .cal-grid .day.other .event-text { color: #c0d0e0; }
+        .cal-grid .wk { font-weight: 600; color: #8a7a85; font-size: 0.6rem; text-align: center; padding: 4px 0; }
+        .cal-grid .day {
+            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: flex-start; border-radius: 12px; font-size: 0.7rem;
+            background: rgba(245, 240, 242, 0.3); cursor: pointer; border: 1px solid transparent;
+            padding: 3px 2px; min-height: 40px; text-align: center; line-height: 1.2;
+            position: relative; overflow: hidden; transition: 0.15s;
+        }
+        .cal-grid .day .day-number { font-size: 0.8rem; font-weight: 500; }
+        .cal-grid .day .event-text {
+            font-size: 0.4rem; color: #c07a8e; line-height: 1.1; max-width: 100%;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            padding: 0 1px; font-weight: 600; width: 100%;
+        }
+        .cal-grid .day .event-text.more { color: #b0a0aa; font-size: 0.35rem; }
+        .cal-grid .day.other { color: #b0a0aa; }
+        .cal-grid .day.other .event-text { color: #c0b0ba; }
         .cal-grid .day:active { transform: scale(0.9); }
-        .cal-grid .day.has { background: #e8f4fa; border-color: #8ab3d0; }
+        .cal-grid .day.has { background: rgba(200, 120, 150, 0.1); border-color: rgba(200, 120, 150, 0.15); }
 
         .grade-nav { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px 0; flex-wrap: wrap; gap: 4px; }
-        .grade-nav .semester-label { font-size: 0.9rem; font-weight: 600; color: #4a6a7a; }
-        .grade-nav button { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 12px; border-radius: 30px; background: #eef4f9; }
+        .grade-nav .semester-label { font-size: 0.85rem; font-weight: 600; color: #5a4a55; }
+        .grade-nav button { background: rgba(240, 235, 238, 0.4); border: none; font-size: 1rem; cursor: pointer; padding: 0px 12px; border-radius: 30px; }
         .grade-nav button:active { transform: scale(0.9); }
 
         .grade-layout { display: flex; gap: 8px; flex-wrap: wrap; }
         .grade-subjects { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
-        .grade-subjects button { padding: 2px 12px; border: 1px solid #dce8f0; border-radius: 30px; background: white; font-size: 0.7rem; cursor: pointer; }
-        .grade-subjects button.active { background: #8ab3d0; color: white; border-color: #8ab3d0; }
+        .grade-subjects button {
+            padding: 2px 12px; border: 1px solid rgba(200, 180, 190, 0.2);
+            border-radius: 30px; background: rgba(255,255,255,0.4); font-size: 0.65rem;
+            cursor: pointer; transition: 0.15s;
+        }
+        .grade-subjects button.active { background: rgba(200, 120, 150, 0.15); border-color: rgba(200, 120, 150, 0.2); }
         .grade-records { max-height: 200px; overflow-y: auto; margin-top: 6px; }
 
         .cups { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
-        .cup { width: 36px; height: 46px; background: #dce8f0; border-radius: 4px 4px 14px 14px; border: 2px solid #8ab3d0; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; user-select: none; }
-        .cup.filled { background: #6d9bbb; color: white; border-color: #4f7f9a; }
+        .cup {
+            width: 34px; height: 44px;
+            background: rgba(220, 230, 240, 0.4);
+            border-radius: 4px 4px 14px 14px;
+            border: 2px solid rgba(160, 180, 210, 0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; cursor: pointer; user-select: none; transition: 0.15s;
+        }
+        .cup.filled { background: linear-gradient(135deg, #8ac4d8, #70b0c8); border-color: rgba(100, 160, 180, 0.3); color: white; }
+        .cup:active { transform: scale(0.9); }
 
-        .diary-photo { max-width: 100%; border-radius: 12px; margin: 4px 0; max-height: 200px; }
+        .diary-photo { max-width: 100%; border-radius: 12px; margin: 4px 0; max-height: 180px; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .modal { background: white; border-radius: 28px; padding: 24px 20px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-        .modal h3 { margin-bottom: 12px; color: #4a6a7a; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px;
+        }
+        .modal {
+            background: rgba(255, 248, 250, 0.95); backdrop-filter: blur(20px);
+            border-radius: 32px; padding: 24px 20px; max-width: 400px; width: 100%;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .modal h3 { margin-bottom: 12px; color: #5a4a55; font-weight: 600; }
         .modal .field { margin: 6px 0; }
-        .modal .field label { font-size: 0.8rem; color: #6a8a9a; display: block; margin-bottom: 2px; }
-        .modal .btn-row { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+        .modal .field label { font-size: 0.75rem; color: #8a7a85; display: block; margin-bottom: 2px; font-weight: 500; }
+        .modal .btn-row { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
 
-        .text-muted { color: #8a9aaa; font-size: 0.8rem; }
+        .text-muted { color: #a08a98; font-size: 0.78rem; }
 
-        .weather-options, .mood-options { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
-        .weather-options button, .mood-options button { padding: 4px 12px; border: 2px solid #dce8f0; border-radius: 30px; background: white; font-size: 1.2rem; cursor: pointer; transition: 0.1s; }
-        .weather-options button.selected, .mood-options button.selected { border-color: #8ab3d0; background: #e8f4fa; }
+        .weather-options, .mood-options { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+        .weather-options button, .mood-options button {
+            padding: 4px 12px; border: 2px solid rgba(200, 180, 190, 0.15);
+            border-radius: 30px; background: rgba(255,255,255,0.4); font-size: 1.1rem;
+            cursor: pointer; transition: 0.15s;
+        }
+        .weather-options button.selected, .mood-options button.selected {
+            border-color: rgba(200, 120, 150, 0.3); background: rgba(200, 120, 150, 0.08);
+        }
         .weather-options button:active, .mood-options button:active { transform: scale(0.92); }
 
-        .sticker-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; pointer-events: none; }
-        .sticker { background: white; border-radius: 60px; padding: 30px 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); font-size: 2.5rem; text-align: center; animation: pop 0.5s ease; pointer-events: auto; border: 4px solid #fce9f0; }
-        .sticker .sub { font-size: 1rem; color: #5a7a8a; margin-top: 4px; }
-        @keyframes pop { 0% { transform: scale(0.2); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+        .sticker-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000; pointer-events: none;
+        }
+        .sticker {
+            background: rgba(255, 248, 250, 0.95); backdrop-filter: blur(20px);
+            border-radius: 60px; padding: 30px 44px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            font-size: 2.5rem; text-align: center; animation: pop 0.4s ease;
+            pointer-events: auto; border: 2px solid rgba(255,255,255,0.5);
+        }
+        .sticker .sub { font-size: 0.9rem; color: #6a5a65; margin-top: 4px; font-weight: 400; }
+        @keyframes pop {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
-        .sync-area { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-        .sync-area .btn { font-size: 0.7rem; padding: 4px 14px; }
-        .sync-area .btn-success { background: #6fbf8a; }
-        .sync-area .btn-danger { background: #d48a8a; }
-
-        .sync-notice { font-size: 0.6rem; color: #8a9aaa; text-align: center; padding: 4px; margin-top: 6px; background: #f0f5fa; border-radius: 30px; }
-        .week-label { font-size: 0.8rem; font-weight: 600; color: #4a6a7a; margin-bottom: 6px; }
-        .debug-info { font-size: 0.6rem; color: #8a9aaa; padding: 4px; text-align: center; background: #f8fafc; border-radius: 20px; margin-top: 4px; word-break: break-all; }
+        .sync-notice {
+            font-size: 0.6rem;
+            color: #a08a98;
+            text-align: center;
+            padding: 4px;
+            margin-top: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+        }
+        .week-label { font-size: 0.8rem; font-weight: 600; color: #5a4a55; margin-bottom: 6px; }
+        .debug-info {
+            font-size: 0.55rem;
+            color: #b0a0aa;
+            padding: 4px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            margin-top: 4px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
-    <div class="title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
+    <div class="title-wrap">
+        <span class="cherry-icon">🍒</span>
+        <div class="main-title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
+        <div class="sub-title">· Cherry ·</div>
+    </div>
 
+    <!-- Token + 同步按鈕 -->
     <div class="token-area">
-        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" value="">
-        <button class="btn-use" id="useTokenBtn">🔑 使用</button>
+        <input type="password" id="tokenInput" placeholder="GitHub Token (ghp_...)" value="">
+        <button class="btn-use" id="useTokenBtn">使用</button>
+        <button class="btn-sync" id="syncBtn">🔄 同步</button>
         <span class="token-status no" id="tokenStatus">未設定</span>
     </div>
 
@@ -131,11 +353,11 @@
             📸 上傳照片
             <input type="file" id="photoInput" accept="image/*">
         </label>
-        <span class="photo-count" id="photoCount">0 張照片</span>
+        <span class="photo-count" id="photoCount">0 張</span>
     </div>
 
     <div class="photo-strip" id="photoStrip">
-        <div class="empty">📸 還沒有照片，點上方上傳</div>
+        <div class="empty">📸 還沒有照片 ✨</div>
     </div>
 
     <div class="main-tabs">
@@ -146,11 +368,7 @@
 
     <div class="panel" id="panel"></div>
 
-    <div class="sync-area">
-        <button class="btn btn-success" id="syncUpBtn">☁️ 上傳備份</button>
-        <button class="btn btn-danger" id="syncDownBtn">☁️ 下載還原</button>
-    </div>
-    <div class="sync-notice" id="syncNotice">💾 點「上傳備份」存到 GitHub，換手機按「下載還原」</div>
+    <div class="sync-notice" id="syncNotice">💾 按「🔄 同步」即可在其他裝置讀取</div>
     <div class="debug-info" id="debugInfo"></div>
 </div>
 
@@ -234,15 +452,21 @@
     }
     updateTokenStatus();
 
-    // ========== 手動上傳 ==========
-    async function uploadToGist() {
+    // ========== 同步（上傳 + 下載） ==========
+    async function fullSync() {
         const token = tokenInput.value.trim();
-        if (!validToken(token)) { alert('請先設定 Token'); return; }
+        if (!validToken(token)) {
+            alert('請先設定有效的 Token');
+            return;
+        }
 
-        setDebug('上傳中...');
-        syncNotice.textContent = '☁️ 上傳中...';
+        tokenStatus.textContent = '⏳ 同步中...';
+        tokenStatus.className = 'token-status syncing';
+        setDebug('🔄 開始同步...');
+        syncNotice.textContent = '☁️ 同步中...';
 
         try {
+            // 1. 先上傳
             const syncData = JSON.parse(JSON.stringify(store));
             syncData.photos = [];
             const dataStr = JSON.stringify(syncData);
@@ -263,7 +487,7 @@
                 body = { files: { 'data.json': { content: dataStr } } };
             }
 
-            const response = await fetch(url, {
+            const uploadRes = await fetch(url, {
                 method: method,
                 headers: {
                     'Authorization': `token ${token}`,
@@ -273,61 +497,33 @@
                 body: JSON.stringify(body)
             });
 
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.message || '上傳失敗');
+            if (!uploadRes.ok) {
+                const err = await uploadRes.json();
+                throw new Error('上傳失敗：' + (err.message || uploadRes.status));
             }
 
-            const result = await response.json();
+            const result = await uploadRes.json();
             if (!gistId) {
                 localStorage.setItem(GIST_ID_KEY, result.id);
+                gistId = result.id;
             }
 
-            syncNotice.textContent = '✅ 上傳成功！';
-            setDebug('✅ 上傳成功！');
-            alert('✅ 備份已上傳到 GitHub！');
+            setDebug('✅ 上傳成功，開始下載...');
 
-        } catch(e) {
-            syncNotice.textContent = '❌ 上傳失敗';
-            setDebug('❌ ' + e.message);
-            alert('❌ 上傳失敗：' + e.message);
-        }
-    }
-
-    // ========== 手動下載 ==========
-    async function downloadFromGist() {
-        const token = tokenInput.value.trim();
-        if (!validToken(token)) { alert('請先設定 Token'); return; }
-
-        const gistId = localStorage.getItem(GIST_ID_KEY);
-        if (!gistId) {
-            alert('還沒有上傳過備份，請先按「上傳備份」');
-            return;
-        }
-
-        if (!confirm('下載會覆蓋目前資料，確定繼續？')) return;
-
-        setDebug('下載中...');
-        syncNotice.textContent = '☁️ 下載中...';
-
-        try {
-            const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+            // 2. 下載
+            const downloadRes = await fetch(`https://api.github.com/gists/${gistId}`, {
                 headers: {
                     'Authorization': `token ${token}`,
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
 
-            if (!response.ok) {
-                if (response.status === 404) {
-                    localStorage.removeItem(GIST_ID_KEY);
-                    throw new Error('備份不存在，請先上傳');
-                }
+            if (!downloadRes.ok) {
                 throw new Error('下載失敗');
             }
 
-            const result = await response.json();
-            const content = result.files['data.json']?.content;
+            const downloadResult = await downloadRes.json();
+            const content = downloadResult.files['data.json']?.content;
             if (!content) throw new Error('資料格式錯誤');
 
             const remoteData = JSON.parse(content);
@@ -348,26 +544,31 @@
             saveLocal();
             renderPhotoStrip();
             renderMain();
-            syncNotice.textContent = '✅ 下載成功！';
-            setDebug('✅ 下載成功！');
-            alert('✅ 資料已還原！');
+
+            tokenStatus.textContent = '✅ 已同步';
+            tokenStatus.className = 'token-status ok';
+            syncNotice.textContent = '✅ 同步完成！資料已更新';
+            setDebug('✅ 同步成功！');
+
+            alert('✅ 同步完成！資料已上傳並下載最新版本');
 
         } catch(e) {
-            syncNotice.textContent = '❌ 下載失敗';
+            tokenStatus.textContent = '❌ 同步失敗';
+            tokenStatus.className = 'token-status no';
+            syncNotice.textContent = '❌ 同步失敗：' + e.message;
             setDebug('❌ ' + e.message);
-            alert('❌ 下載失敗：' + e.message);
+            alert('❌ 同步失敗：' + e.message);
         }
     }
 
-    document.getElementById('syncUpBtn').addEventListener('click', uploadToGist);
-    document.getElementById('syncDownBtn').addEventListener('click', downloadFromGist);
+    document.getElementById('syncBtn').addEventListener('click', fullSync);
 
     // ========== 照片 ==========
     function renderPhotoStrip() {
         const photos = store.photos || [];
-        photoCount.textContent = `${photos.length} 張照片`;
+        photoCount.textContent = `${photos.length} 張`;
         if (photos.length === 0) {
-            photoStrip.innerHTML = `<div class="empty">📸 還沒有照片，點上方上傳</div>`;
+            photoStrip.innerHTML = `<div class="empty">📸 還沒有照片 ✨</div>`;
             updateUploadBtn();
             return;
         }
@@ -500,7 +701,7 @@
         updateTokenStatus();
     }
 
-    // ========== 學習 ==========
+    // ===== 學習 =====
     function renderStudy() {
         return `
             <div class="sub-tabs">
@@ -557,7 +758,7 @@
                 eventHtml = `<span class="event-text">${subject}</span>`;
                 if (events.length > 1) eventHtml += `<span class="event-text more">+${events.length-1}</span>`;
             }
-            const isToday = ds === todayStr ? ' style="border-color:#8ab3d0;border-width:2px;"' : '';
+            const isToday = ds === todayStr ? ' style="border-color:#c07a8e;border-width:2px;"' : '';
             html += `<div class="day ${has?'has':''}" onclick="window._showDay('${ds}')"${isToday}>
                 <span class="day-number">${d}</span>
                 ${eventHtml}
@@ -646,7 +847,7 @@
                 <button onclick="window._changeSemester(-1)">‹</button>
                 <span class="semester-label">${sem}</span>
                 <button onclick="window._changeSemester(1)">›</button>
-                <span style="font-size:0.6rem;color:#8a9aaa;">${currentSemesterIdx+1}/${ALL_SEMESTERS.length}</span>
+                <span style="font-size:0.55rem;color:#a08a98;">${currentSemesterIdx+1}/${ALL_SEMESTERS.length}</span>
             </div>
             <div class="grade-layout">
                 <div style="flex:1;min-width:160px;">
@@ -715,7 +916,7 @@
         }
     };
 
-    // ========== 日記 ==========
+    // ===== 日記 =====
     function renderDiary() {
         const entries = store.diary.entries || [];
         const today = new Date();
@@ -810,7 +1011,7 @@
         else { alert(found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n')); }
     };
 
-    // ========== 健康 ==========
+    // ===== 健康 =====
     function renderHealth() {
         let html = `
             <div class="flex-row">
@@ -948,10 +1149,9 @@
         window._showExercise();
     };
 
-    // ========== 初始化 ==========
+    // ===== 初始化 =====
     renderMain();
 
-    // 每日喝水重置
     setInterval(() => {
         const today = new Date().toISOString().slice(0,10);
         if (store.health.water.today.date !== today) {
