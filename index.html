@@ -72,7 +72,6 @@
         }
         .token-status.ok { background: #d4edda; color: #155724; }
         .token-status.no { background: #f8d7da; color: #721c24; }
-        .token-status.sync { background: #fff3cd; color: #856404; }
 
         .upload-area {
             display: flex;
@@ -100,50 +99,49 @@
 
         .photo-strip {
             display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding: 6px 4px;
+            gap: 12px;
+            padding: 10px;
             margin-bottom: 10px;
             background: #f5f9fe;
             border-radius: 16px;
-            min-height: 64px;
+            min-height: 180px;
             align-items: center;
-            flex-wrap: nowrap;
-            border: 1px solid #e8f0f8;
+            justify-content: center;
+            border: 2px dashed #dce8f0;
+            flex-direction: column;
         }
         .photo-strip .empty {
             color: #aab8c8;
-            font-size: 0.8rem;
-            padding: 0 12px;
-            width: 100%;
+            font-size: 0.9rem;
             text-align: center;
         }
         .photo-strip .photo-item {
             position: relative;
-            flex: 0 0 56px;
-            height: 56px;
+            max-width: 100%;
+            width: 100%;
             border-radius: 12px;
             overflow: hidden;
             border: 2px solid #dcebf5;
         }
         .photo-strip .photo-item img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-height: 300px;
+            object-fit: contain;
+            display: block;
         }
         .photo-strip .photo-item .del-photo {
             position: absolute;
-            top: -4px;
-            right: -4px;
+            top: 8px;
+            right: 8px;
             background: #d48a8a;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
             cursor: pointer;
-            line-height: 18px;
+            line-height: 28px;
             text-align: center;
         }
 
@@ -254,7 +252,7 @@
             align-items: center;
             justify-content: center;
             border-radius: 10px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             background: #f4f8fc;
             cursor: pointer;
             border: 1px solid transparent;
@@ -262,11 +260,14 @@
             font-weight: 500;
             padding: 2px;
             min-height: 40px;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-all;
         }
         .cal-grid .day .event-dot {
-            font-size: 0.5rem;
+            font-size: 0.45rem;
             color: #8ab3d0;
-            line-height: 1;
+            line-height: 1.1;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -277,7 +278,7 @@
         }
         .cal-grid .day .event-dot.more {
             color: #b0c0d0;
-            font-size: 0.45rem;
+            font-size: 0.4rem;
         }
         .cal-grid .day.other { color: #b0c0d0; }
         .cal-grid .day:active { transform: scale(0.9); }
@@ -545,32 +546,47 @@
         const photos = store.photos || [];
         photoCount.textContent = `${photos.length} 張照片`;
         if (photos.length === 0) {
-            photoStrip.innerHTML = `<div class="empty">📸 還沒有照片，點上方上傳</div>`;
+            photoStrip.innerHTML = `<div class="empty">📸 還沒有照片，點上方「上傳照片」</div>`;
+            updateUploadBtn();
             return;
         }
-        let html = '';
-        photos.forEach((p, i) => {
-            html += `<div class="photo-item">
-                <img src="${p.data}" onclick="window._viewPhoto('${p.data}')">
-                <button class="del-photo" onclick="window._delPhoto(${i})">✕</button>
-            </div>`;
-        });
+        const lastPhoto = photos[photos.length - 1];
+        let html = `<div class="photo-item">
+            <img src="${lastPhoto.data}" onclick="window._viewPhoto('${lastPhoto.data}')">
+            <button class="del-photo" onclick="window._delPhoto(${photos.length - 1})">✕</button>
+        </div>`;
         photoStrip.innerHTML = html;
+        updateUploadBtn();
     }
 
-    document.getElementById('photoInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
-            save();
-            renderPhotoStrip();
-            renderMain();
-        };
-        reader.readAsDataURL(file);
-        this.value = '';
-    });
+    function updateUploadBtn() {
+        const btn = document.getElementById('uploadBtn');
+        if (!btn) return;
+        const photos = store.photos || [];
+        if (photos.length > 0) {
+            btn.innerHTML = '🔄 更換照片 <input type="file" id="photoInput" accept="image/*">';
+        } else {
+            btn.innerHTML = '📸 上傳照片 <input type="file" id="photoInput" accept="image/*">';
+        }
+        const input = btn.querySelector('input');
+        if (input) {
+            const newInput = input.cloneNode(true);
+            input.parentNode.replaceChild(newInput, input);
+            newInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
+                    save();
+                    renderPhotoStrip();
+                    renderMain();
+                };
+                reader.readAsDataURL(file);
+                this.value = '';
+            });
+        }
+    }
 
     window._delPhoto = function(idx) {
         if (!confirm('刪除這張照片嗎？')) return;
@@ -706,7 +722,6 @@
         const first = new Date(y,m,1).getDay();
         const days = new Date(y,m+1,0).getDate();
 
-        // 收集當月所有行程
         const monthEvents = {};
         store.study.calendar.forEach(e => {
             const parts = e.date.split('-');
@@ -729,9 +744,9 @@
             const has = events.length > 0;
             let dotHtml = '';
             if (has) {
-                const display = events.slice(0, 2);
-                dotHtml = `<span class="event-dot has">${display.join(' • ')}</span>`;
-                if (events.length > 2) dotHtml += `<span class="event-dot more">+${events.length-2}...</span>`;
+                const display = events.slice(0, 1);
+                dotHtml = `<span class="event-dot has">${display.join('')}</span>`;
+                if (events.length > 1) dotHtml += `<span class="event-dot more">+${events.length-1}</span>`;
             }
             html += `<div class="day ${has?'has':''}" onclick="window._showDay('${ds}')">
                 ${d}
@@ -778,7 +793,7 @@
         if (idx > -1) { store.study.calendar.splice(idx,1); save(); renderMain(); }
     };
 
-    // ----- 備忘錄（無圓圈）-----
+    // ----- 備忘錄 -----
     function renderTodos() {
         const todos = store.study.todos || [];
         let html = `<button class="btn" onclick="window._addTodo()">➕ 新增待辦</button>`;
@@ -1095,9 +1110,8 @@
         const h = store.health.water.history || [];
         let msg = '📋 喝水歷史\n';
         h.forEach(x => msg += `${x.date} : ${x.cups}杯\n`);
-        msg += '\n💡 點擊日期可修改';
+        msg += '\n💡 點擊確定可修改';
         alert(msg);
-        // 簡單修改功能
         const idx = prompt('要修改第幾筆？(輸入數字，從0開始)');
         if (idx !== null && !isNaN(idx) && h[parseInt(idx)]) {
             const newDate = prompt('新日期 (YYYY-MM-DD)', h[parseInt(idx)].date);
