@@ -3,7 +3,12 @@
   "study": {
     "calendar": [],
     "todos": [],
-    "grades": {}
+    "grades": {
+      "2024/2025 第一段": {},
+      "2024/2025 第二段": {},
+      "2025/2026 第一段": {},
+      "2025/2026 第二段": {}
+    }
   },
   "diary": {
     "entries": []
@@ -11,10 +16,7 @@
   "health": {
     "bmiRecords": [],
     "water": {
-      "today": {
-        "date": "",
-        "cups": 0
-      },
+      "today": { "date": "", "cups": 0 },
       "history": []
     },
     "exercises": []
