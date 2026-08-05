@@ -226,6 +226,17 @@
             border-radius: 20px;
             white-space: nowrap;
         }
+        .import-export {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .import-export .btn-icon {
+            font-size: 0.75rem;
+            padding: 4px 14px;
+        }
         @media (max-width: 480px) { .token-upload-row input[type="password"] { flex: 1 1 100px; } }
     </style>
 </head>
@@ -254,6 +265,13 @@
 
     <div class="content-panel" id="mainPanel">
         <!-- 動態內容 -->
+    </div>
+
+    <!-- 匯入/匯出 -->
+    <div class="import-export">
+        <button class="btn-icon" id="exportDataBtn">📤 匯出資料</button>
+        <button class="btn-icon" id="importDataBtn">📥 匯入資料</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;">
     </div>
     
     <div class="security-notice">
@@ -378,6 +396,57 @@
                 switchMainTab('diary');
             };
             reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+
+        // ---------- 匯出 / 匯入 ----------
+        document.getElementById('exportDataBtn').addEventListener('click', function() {
+            const token = tokenInput.value.trim();
+            if (!isValidGitHubToken(token)) {
+                alert('⚠️ 請先設定有效的 GitHub Token');
+                return;
+            }
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) {
+                alert('沒有資料可匯出');
+                return;
+            }
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cherry_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('✅ 資料匯出成功！');
+        });
+
+        document.getElementById('importDataBtn').addEventListener('click', function() {
+            const token = tokenInput.value.trim();
+            if (!isValidGitHubToken(token)) {
+                alert('⚠️ 請先設定有效的 GitHub Token');
+                return;
+            }
+            document.getElementById('importFileInput').click();
+        });
+
+        document.getElementById('importFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = ev.target.result;
+                    // 驗證是否為有效的 JSON
+                    JSON.parse(simpleDecode(data) || '{}');
+                    localStorage.setItem(STORAGE_KEY, data);
+                    alert('✅ 資料匯入成功！請重新整理頁面。');
+                    location.reload();
+                } catch(err) {
+                    alert('❌ 檔案格式錯誤，請確認是正確的備份檔');
+                }
+            };
+            reader.readAsText(file);
             e.target.value = '';
         });
 
