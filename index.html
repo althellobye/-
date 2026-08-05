@@ -72,6 +72,7 @@
         }
         .token-status.ok { background: #d4edda; color: #155724; }
         .token-status.no { background: #f8d7da; color: #721c24; }
+        .token-status.sync { background: #fff3cd; color: #856404; }
 
         .upload-area {
             display: flex;
@@ -451,31 +452,12 @@
             margin-top: 6px;
             background: #f0f5fa;
             border-radius: 30px;
-            cursor: pointer;
-            transition: 0.2s;
         }
-        .sync-notice:hover { background: #e8eef5; }
-        .sync-notice .status-ok { color: #155724; }
-        .sync-notice .status-fail { color: #721c24; }
-        .sync-notice .status-sync { color: #856404; }
-        .sync-notice .status-idle { color: #8a9aaa; }
-        .sync-notice .status-wait { color: #856404; }
-
         .week-label {
             font-size: 0.8rem;
             font-weight: 600;
             color: #4a6a7a;
             margin-bottom: 6px;
-        }
-        .debug-info {
-            font-size: 0.6rem;
-            color: #8a9aaa;
-            padding: 4px;
-            text-align: center;
-            background: #f8fafc;
-            border-radius: 20px;
-            margin-top: 4px;
-            word-break: break-all;
         }
     </style>
 </head>
@@ -509,18 +491,14 @@
 
     <div class="panel" id="panel"></div>
 
-    <div class="sync-notice" id="syncNotice">
-        <span class="status-idle">☁️ 點擊手動同步</span>
-    </div>
-    <div class="debug-info" id="debugInfo"></div>
+    <div class="sync-notice" id="syncNotice">☁️ 自動同步已開啟（每5分鐘）</div>
 </div>
 
 <script>
 (function() {
-    // ========== 儲存設定 ==========
-    const STORE_KEY = 'cherry_data_v14';
-    const TOKEN_KEY = 'cherry_token_v14';
-    const REPO_KEY = 'cherry_repo_name';
+    const STORE_KEY = 'cherry_data_final';
+    const TOKEN_KEY = 'cherry_token_final';
+    const GIST_ID_KEY = 'cherry_gist_id_final';
 
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
@@ -539,7 +517,6 @@
 
     function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
 
-    // ========== 固定資料 ==========
     const SUBJECTS = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
     const WEATHER_EMOJIS = { '☀️': '晴', '⛅': '多雲', '☁️': '陰', '🌧️': '雨', '❄️': '雪' };
     const MOOD_EMOJIS = { '😊': '開心', '😐': '普通', '😢': '難過', '🤩': '興奮', '😌': '平靜' };
@@ -555,7 +532,6 @@
     }
     const ALL_SEMESTERS = generateSemesters();
 
-    // ========== Store ==========
     let store = {
         token: localStorage.getItem(TOKEN_KEY) || '',
         photos: [],
@@ -581,43 +557,24 @@
         if (!store.study.grades[s]) store.study.grades[s] = {};
     });
 
-    // ========== DOM ==========
     const tokenInput = document.getElementById('tokenInput');
     const tokenStatus = document.getElementById('tokenStatus');
     const photoStrip = document.getElementById('photoStrip');
     const photoCount = document.getElementById('photoCount');
     const panel = document.getElementById('panel');
     const syncNotice = document.getElementById('syncNotice');
-    const debugInfo = document.getElementById('debugInfo');
     tokenInput.value = store.token || '';
 
-    function setDebug(msg) {
-        debugInfo.textContent = msg;
-        console.log('[Debug]', msg);
-    }
-
-    function setSyncStatus(text, type) {
-        const span = syncNotice.querySelector('span') || document.createElement('span');
-        span.textContent = text;
-        span.className = type || 'status-idle';
-        if (!syncNotice.querySelector('span')) {
-            syncNotice.innerHTML = '';
-            syncNotice.appendChild(span);
-        }
-    }
-
-    // ========== Token ==========
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
         if (!t) { alert('請輸入 Token'); return; }
-        if (!validToken(t)) { alert('Token 格式錯誤，請輸入 ghp_ 開頭的 token'); return; }
+        if (!validToken(t)) { alert('Token 格式錯誤'); return; }
         store.token = t;
         localStorage.setItem(TOKEN_KEY, t);
         saveLocal();
         updateTokenStatus();
         alert('✅ Token 已設定！');
         renderMain();
-        // 延遲後自動同步
         setTimeout(() => { autoSync(); }, 3000);
     });
 
@@ -629,61 +586,44 @@
     }
     updateTokenStatus();
 
-    // ========== 使用 repo 方式同步 ==========
+    // ========== 同步核心 ==========
     let isSyncing = false;
-    let syncTimer = null;
+    let lastSyncTime = 0;
+    const SYNC_INTERVAL = 300000; // 5 分鐘
 
-    // 獲取或建立倉庫中的檔案
-    async function syncToRepo(token) {
-        const repoName = localStorage.getItem(REPO_KEY) || 'cherry-app-data';
-        const fileName = 'data.json';
-        const filePath = fileName;
+    async function autoSync() {
+        const token = tokenInput.value.trim();
+        if (!validToken(token)) return;
 
-        // 準備資料（排除照片）
-        const syncData = JSON.parse(JSON.stringify(store));
-        syncData.photos = [];
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(syncData))));
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_INTERVAL && lastSyncTime > 0) {
+            return;
+        }
 
-        // 1. 先檢查檔案是否存在
-        let sha = null;
-        let exists = false;
-
-        try {
-            const checkRes = await fetch(
-                `https://api.github.com/repos/${tokenInput.value.trim().split('_')[1]? 'althellobye' : 'althellobye'}/cherry-app-data/contents/${filePath}`,
-                {
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                }
-            );
-            // 這裡需要使用固定的用戶名，我們用 althellobye
-            // 但更好的方式是讓用戶自己填 repo 名稱
-        } catch(e) {}
-
-        // 改用更簡單的方式：用 Gist 但使用 repo token
-        // 實際上 repo token 也可以用來操作 Gist
-        // 但我們直接用 Gist API，因為更簡單
-        // repo token 也可以用於 Gist
+        if (isSyncing) return;
+        isSyncing = true;
+        syncNotice.textContent = '☁️ 同步中...';
+        syncNotice.style.color = '#856404';
 
         try {
-            const gistId = localStorage.getItem('cherry_gist_id_v14');
+            const syncData = JSON.parse(JSON.stringify(store));
+            syncData.photos = [];
+            const dataStr = JSON.stringify(syncData);
+
+            let gistId = localStorage.getItem(GIST_ID_KEY);
 
             let url = 'https://api.github.com/gists';
             let method = 'POST';
             let body = {
-                description: 'Cherry App Data (repo token)',
+                description: 'Cherry App Data',
                 public: false,
-                files: {
-                    'data.json': { content: JSON.stringify(syncData) }
-                }
+                files: { 'data.json': { content: dataStr } }
             };
 
             if (gistId) {
                 url = `https://api.github.com/gists/${gistId}`;
                 method = 'PATCH';
-                body = { files: { 'data.json': { content: JSON.stringify(syncData) } } };
+                body = { files: { 'data.json': { content: dataStr } } };
             }
 
             const response = await fetch(url, {
@@ -698,84 +638,37 @@
 
             if (!response.ok) {
                 const err = await response.json();
-                let msg = err.message || '同步失敗';
-                if (response.status === 401) msg = 'Token 無效或已過期 (401)';
-                else if (response.status === 403) {
-                    msg = 'Token 權限不足，需要 repo 或 gist 權限 (403)';
-                }
-                throw new Error(msg);
+                throw new Error(err.message || '同步失敗');
             }
 
             const result = await response.json();
             if (!gistId) {
-                localStorage.setItem('cherry_gist_id_v14', result.id);
+                localStorage.setItem(GIST_ID_KEY, result.id);
             }
 
-            return true;
-
-        } catch(e) {
-            throw e;
-        }
-    }
-
-    // ========== 自動同步（帶冷卻） ==========
-    let lastSyncTime = 0;
-    const SYNC_COOLDOWN = 60000; // 60 秒冷卻
-    let isAutoSyncing = false;
-
-    async function autoSync() {
-        const token = tokenInput.value.trim();
-        if (!validToken(token)) {
-            setSyncStatus('⚠️ 請先設定 Token', 'status-fail');
-            return;
-        }
-
-        const now = Date.now();
-        if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
-            const wait = Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000);
-            setSyncStatus(`⏳ 冷卻中 ${wait}s`, 'status-wait');
-            return;
-        }
-
-        if (isAutoSyncing) return;
-        isAutoSyncing = true;
-        setSyncStatus('☁️ 同步中...', 'status-sync');
-        setDebug('開始同步 (repo token)...');
-
-        try {
-            await syncToRepo(token);
             lastSyncTime = Date.now();
-            setSyncStatus('☁️ 已同步 ✓', 'status-ok');
-            setDebug('✅ 同步成功！');
+            syncNotice.textContent = '☁️ 已同步 ✓';
+            syncNotice.style.color = '#155724';
+
         } catch(e) {
-            setSyncStatus('☁️ ' + e.message, 'status-fail');
-            setDebug('❌ 錯誤: ' + e.message);
+            syncNotice.textContent = '☁️ 同步失敗，5分鐘後重試';
+            syncNotice.style.color = '#721c24';
+            console.error('同步錯誤:', e);
         }
-        isAutoSyncing = false;
+        isSyncing = false;
     }
 
-    // 點擊手動同步
-    syncNotice.addEventListener('click', autoSync);
-
-    // ========== 載入雲端資料 ==========
     async function loadFromGist() {
         const token = tokenInput.value.trim();
-        if (!validToken(token)) {
-            setDebug('Token 未設定');
-            return;
-        }
+        if (!validToken(token)) return;
 
-        const gistId = localStorage.getItem('cherry_gist_id_v14');
+        const gistId = localStorage.getItem(GIST_ID_KEY);
         if (!gistId) {
-            setDebug('首次使用，將自動建立備份');
             setTimeout(() => { autoSync(); }, 5000);
             return;
         }
 
         try {
-            setSyncStatus('☁️ 載入雲端...', 'status-sync');
-            setDebug('載入 Gist: ' + gistId);
-
             const response = await fetch(`https://api.github.com/gists/${gistId}`, {
                 headers: {
                     'Authorization': `token ${token}`,
@@ -785,18 +678,14 @@
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    localStorage.removeItem('cherry_gist_id_v14');
-                    setDebug('Gist 不存在，將重新建立');
+                    localStorage.removeItem(GIST_ID_KEY);
                 }
                 return;
             }
 
             const result = await response.json();
             const content = result.files['data.json']?.content;
-            if (!content) {
-                setDebug('Gist 中沒有 data.json');
-                return;
-            }
+            if (!content) return;
 
             const remoteData = JSON.parse(content);
             const localPhotos = store.photos || [];
@@ -818,20 +707,18 @@
             saveLocal();
             renderPhotoStrip();
             renderMain();
-            setSyncStatus('☁️ 已從雲端載入 ✓', 'status-ok');
-            setDebug('✅ 載入成功！');
+            syncNotice.textContent = '☁️ 已從雲端載入 ✓';
+            syncNotice.style.color = '#155724';
 
         } catch(e) {
-            setSyncStatus('☁️ 載入失敗，使用本地', 'status-fail');
-            setDebug('❌ 載入錯誤: ' + e.message);
+            console.error('載入錯誤:', e);
         }
     }
 
-    // ========== 儲存 + 自動同步 ==========
     function saveAndSync() {
         saveLocal();
-        if (syncTimer) clearTimeout(syncTimer);
-        syncTimer = setTimeout(() => {
+        if (window._syncTimer) clearTimeout(window._syncTimer);
+        window._syncTimer = setTimeout(() => {
             autoSync();
         }, 5000);
     }
@@ -1463,12 +1350,12 @@
     // ========== 初始化 ==========
     loadFromGist().then(() => {
         renderMain();
-        // 每 2 分鐘自動同步一次
+        // 每 5 分鐘自動同步一次
         setInterval(() => {
             if (document.visibilityState === 'visible') {
                 autoSync();
             }
-        }, 120000);
+        }, 300000);
     });
 
     // 每日喝水重置
@@ -1486,7 +1373,7 @@
         if (t && validToken(t)) { store.token = t; localStorage.setItem(TOKEN_KEY, t); saveLocal(); }
     });
 
-    // 暴露函數給全局
+    // 暴露函數
     window._manualSync = autoSync;
     window._switchSub = switchSub;
     window._switchSubject = switchSubject;
