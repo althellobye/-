@@ -2,7 +2,8 @@ const CACHE_NAME = 'cherry-space-v1';
 const urlsToCache = [
   '/-/',
   '/-/index.html',
-  '/-/manifest.json'
+  '/-/manifest.json',
+  '/-/data.json'
 ];
 
 self.addEventListener('install', event => {
