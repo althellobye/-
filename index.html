@@ -32,7 +32,6 @@
             color: #5a7a8a;
             margin-bottom: 10px;
         }
-        /* Token */
         .token-area {
             display: flex;
             gap: 6px;
@@ -74,7 +73,6 @@
         .token-status.ok { background: #d4edda; color: #155724; }
         .token-status.no { background: #f8d7da; color: #721c24; }
 
-        /* 照片橫條 */
         .photo-strip {
             display: flex;
             gap: 6px;
@@ -138,7 +136,6 @@
         }
         .photo-strip .upload-btn-sm input { display: none; }
 
-        /* 主選單 */
         .main-tabs {
             display: flex;
             gap: 4px;
@@ -219,7 +216,7 @@
             box-shadow: 0 1px 6px #d0e0ec;
             font-size: 0.85rem;
         }
-        .record-card .right { float: right; }
+        .record-card .right { float: right; margin-left: 4px; }
         input, select, textarea {
             background: white;
             border: 1px solid #dce8f0;
@@ -249,8 +246,18 @@
             background: #f4f8fc;
             cursor: pointer;
             border: 1px solid transparent;
+            position: relative;
+            font-weight: 500;
         }
-        .cal-grid .day.has { background: #8ab3d0; color: white; font-weight: 600; }
+        .cal-grid .day.has::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 6px;
+            height: 6px;
+            background: #8ab3d0;
+            border-radius: 50%;
+        }
         .cal-grid .day.other { color: #b0c0d0; }
         .cal-grid .day:active { transform: scale(0.9); }
 
@@ -342,12 +349,9 @@
         .modal .field { margin: 6px 0; }
         .modal .field label { font-size: 0.8rem; color: #6a8a9a; display: block; margin-bottom: 2px; }
         .modal .btn-row { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
-        .hidden { display: none !important; }
 
         .text-muted { color: #8a9aaa; font-size: 0.8rem; }
-        .mt-4 { margin-top: 4px; }
-        .mb-4 { margin-bottom: 4px; }
-        .emoji-big { font-size: 1.4rem; }
+
         .weather-options, .mood-options {
             display: flex;
             gap: 8px;
@@ -368,25 +372,50 @@
             background: #e8f4fa;
         }
         .weather-options button:active, .mood-options button:active { transform: scale(0.92); }
+
+        /* 貼紙彈窗 */
+        .sticker-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none;
+        }
+        .sticker {
+            background: white;
+            border-radius: 60px;
+            padding: 30px 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            font-size: 2.5rem;
+            text-align: center;
+            animation: pop 0.5s ease;
+            pointer-events: auto;
+            border: 4px solid #fce9f0;
+        }
+        .sticker .sub { font-size: 1rem; color: #5a7a8a; margin-top: 4px; }
+        @keyframes pop {
+            0% { transform: scale(0.2); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
     <div class="title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
 
-    <!-- Token -->
     <div class="token-area">
         <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" value="">
         <button class="btn-use" id="useTokenBtn">🔑 使用</button>
         <span class="token-status no" id="tokenStatus">未設定</span>
     </div>
 
-    <!-- 照片橫條 -->
     <div class="photo-strip" id="photoStrip">
         <div class="empty">📸 上傳照片顯示在這裡</div>
     </div>
 
-    <!-- 主選單 -->
     <div class="main-tabs">
         <button class="active" data-tab="study">📚 學習</button>
         <button data-tab="diary">📖 日記</button>
@@ -398,9 +427,8 @@
 
 <script>
 (function() {
-    // ===== 儲存 =====
-    const STORE_KEY = 'cherry_data_v3';
-    const TOKEN_KEY = 'cherry_token_v3';
+    const STORE_KEY = 'cherry_data_v4';
+    const TOKEN_KEY = 'cherry_token_v4';
 
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
@@ -419,13 +447,11 @@
 
     function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
 
-    // ===== 學段（只顯示進行中的） =====
     const ACTIVE_SEMESTERS = ['2026/2027 第一段', '2026/2027 第二段'];
     const SUBJECTS = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
-
-    // 天氣和心情表情
     const WEATHER_EMOJIS = { '☀️': '晴', '⛅': '多雲', '☁️': '陰', '🌧️': '雨', '❄️': '雪' };
     const MOOD_EMOJIS = { '😊': '開心', '😐': '普通', '😢': '難過', '🤩': '興奮', '😌': '平靜' };
+    const STATUS_ORDER = { '過度肥胖':0, '輕度肥胖':1, '正常':2, '輕度瘦弱':3, '過度瘦弱':4 };
 
     let store = {
         token: localStorage.getItem(TOKEN_KEY) || '',
@@ -435,7 +461,6 @@
         health: { bmi: [], water: { today: { date: '', cups: 0 }, history: [] }, exercise: [] }
     };
 
-    // 初始化學段
     ACTIVE_SEMESTERS.forEach(s => { if (!store.study.grades[s]) store.study.grades[s] = {}; });
 
     const saved = load();
@@ -444,15 +469,12 @@
         ACTIVE_SEMESTERS.forEach(s => { if (!store.study.grades[s]) store.study.grades[s] = {}; });
     }
 
-    // ===== DOM =====
     const tokenInput = document.getElementById('tokenInput');
     const tokenStatus = document.getElementById('tokenStatus');
     const photoStrip = document.getElementById('photoStrip');
     const panel = document.getElementById('panel');
-
     tokenInput.value = store.token || '';
 
-    // ===== Token =====
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
         if (!t) { alert('請輸入 Token'); return; }
@@ -472,7 +494,7 @@
     }
     updateTokenStatus();
 
-    // ===== 照片管理 =====
+    // ===== 照片 =====
     function renderPhotoStrip() {
         const photos = store.photos || [];
         if (photos.length === 0) {
@@ -505,7 +527,6 @@
             this.value = '';
         });
     }
-
     window._delPhoto = function(idx) {
         if (!confirm('刪除這張照片嗎？')) return;
         store.photos.splice(idx, 1);
@@ -518,6 +539,18 @@
         w.document.write(`<img src="${data}" style="max-width:100%;height:auto;">`);
     };
     renderPhotoStrip();
+
+    // ===== 貼紙彈窗 =====
+    function showSticker(emoji, text) {
+        const overlay = document.createElement('div');
+        overlay.className = 'sticker-overlay';
+        overlay.innerHTML = `<div class="sticker" onclick="this.parentElement.remove()">
+            ${emoji}
+            <div class="sub">${text}</div>
+        </div>`;
+        document.body.appendChild(overlay);
+        setTimeout(() => { if (overlay.parentElement) overlay.remove(); }, 3000);
+    }
 
     // ===== 選單 =====
     let currentTab = 'study';
@@ -571,7 +604,6 @@
         overlay.innerHTML = html;
         document.body.appendChild(overlay);
 
-        // 處理表情選擇
         overlay.querySelectorAll('.weather-options button, .mood-options button').forEach(b => {
             b.addEventListener('click', function() {
                 this.parentElement.querySelectorAll('button').forEach(x => x.classList.remove('selected'));
@@ -628,7 +660,6 @@
         const y = now.getFullYear(), m = now.getMonth();
         const first = new Date(y,m,1).getDay();
         const days = new Date(y,m+1,0).getDate();
-        const today = now.getDate();
 
         let html = `<div class="flex-row">
             <span style="font-weight:600;">${y}年${m+1}月</span>
@@ -643,7 +674,7 @@
             html += `<div class="day ${has?'has':''}" onclick="window._showDay('${ds}')">${d}</div>`;
         }
         html += `</div><div id="dayEvents">`;
-        const todayStr = `${y}-${String(m+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+        const todayStr = `${y}-${String(m+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
         const todayEvents = store.study.calendar.filter(e => e.date === todayStr);
         if (todayEvents.length) {
             html += `<div style="font-weight:600;font-size:0.8rem;margin:4px 0;">📌 今天</div>`;
@@ -745,11 +776,8 @@
         const records = store.study.grades[sem]?.[sub] || [];
         if (!records.length) return `<div class="text-muted" style="padding:4px 0;">📝 尚無成績</div>`;
         let html = '';
-        let prev = null;
         records.forEach((r,i) => {
-            const encourage = (prev && r.score > prev.score) ? '🎉進步！' : (prev && r.score < prev.score ? '📉加油' : '');
-            html += `<div class="record-card">${r.date} ${r.score}分 ${r.note?'('+r.note+')':''} ${encourage} <button class="btn btn-danger btn-sm right" onclick="window._delGrade('${sem}','${sub}',${i})">✕</button></div>`;
-            prev = r;
+            html += `<div class="record-card">${r.date} ${r.score}分 ${r.note?'('+r.note+')':''} <button class="btn btn-danger btn-sm right" onclick="window._delGrade('${sem}','${sub}',${i})">✕</button></div>`;
         });
         return html;
     }
@@ -765,7 +793,6 @@
             if (store.study.grades[result.name]) { alert('學段已存在'); return; }
             store.study.grades[result.name] = {};
             currentSemester = result.name;
-            // 加入活躍學段列表
             ACTIVE_SEMESTERS.push(result.name);
             save();
             renderMain();
@@ -786,9 +813,19 @@
             if (isNaN(score)) { alert('請輸入有效分數'); return; }
             if (!store.study.grades[sem]) store.study.grades[sem] = {};
             if (!store.study.grades[sem][sub]) store.study.grades[sem][sub] = [];
-            store.study.grades[sem][sub].push({ date: result.date, score, note: result.note || '' });
+            const records = store.study.grades[sem][sub];
+            const prev = records.length > 0 ? records[records.length-1].score : null;
+            records.push({ date: result.date, score, note: result.note || '' });
             save();
             renderMain();
+            // 貼紙彈窗
+            if (prev !== null) {
+                if (score > prev) showSticker('🎉', '進步了！繼續加油！');
+                else if (score < prev) showSticker('💪', '退步了，下次加油！');
+                else showSticker('😊', '保持水準！');
+            } else {
+                showSticker('🌟', '第一筆成績！繼續努力！');
+            }
         });
     };
 
@@ -819,6 +856,7 @@
                         <div>${e.content||''}</div>
                         ${e.image ? `<img src="${e.image}" class="diary-photo">` : ''}
                         <button class="btn btn-sm" onclick="window._editDiary(${e.id})">✏️ 編輯</button>
+                        <button class="btn btn-danger btn-sm" onclick="window._delDiary(${e.id})">🗑️ 刪除</button>
                     </div>
                 `).join('')}
             </div>
@@ -828,7 +866,6 @@
 
     window._addDiary = function() {
         if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
-        // 新增日記不用密碼
         showModal('新增日記', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'weather', label: '天氣', type: 'weather', value: '☀️' },
@@ -854,16 +891,29 @@
     window._editDiary = function(id) {
         const entry = store.diary.entries.find(e => e.id === id);
         if (!entry) return;
-        // 編輯需要密碼
-        const pwd = prompt('🔒 請輸入密碼 (cherry)');
+        const pwd = prompt('🔒 請輸入密碼');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         showModal('編輯日記', [
-            { key: 'content', label: '內容', type: 'textarea', value: entry.content }
+            { key: 'date', label: '日期', type: 'date', value: entry.date || '' },
+            { key: 'weather', label: '天氣', type: 'weather', value: entry.weather || '☀️' },
+            { key: 'mood', label: '心情', type: 'mood', value: entry.mood || '😊' },
+            { key: 'content', label: '內容', type: 'textarea', value: entry.content || '' }
         ], function(result) {
-            if (result.content !== undefined) entry.content = result.content;
+            entry.date = result.date || entry.date;
+            entry.weather = result.weather || entry.weather;
+            entry.mood = result.mood || entry.mood;
+            entry.content = result.content || entry.content;
             save();
             renderMain();
         });
+    };
+
+    window._delDiary = function(id) {
+        if (!confirm('確定刪除這篇日記嗎？')) return;
+        const pwd = prompt('🔒 請輸入密碼');
+        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
+        const idx = store.diary.entries.findIndex(e => e.id === id);
+        if (idx > -1) { store.diary.entries.splice(idx, 1); save(); renderMain(); }
     };
 
     window._searchDiary = function() {
@@ -880,7 +930,7 @@
     function renderHealth() {
         let html = `
             <div class="flex-row">
-                <button class="btn btn-sm" onclick="window._showBMI()">🧮 BMI</button>
+                <button class="btn btn-sm" onclick="window._showBMI()">🧮 健康程度</button>
                 <button class="btn btn-sm" onclick="window._showWater()">💧 喝水</button>
                 <button class="btn btn-sm" onclick="window._showExercise()">🏃 運動</button>
             </div>
@@ -891,13 +941,17 @@
 
     function renderBMI() {
         const records = store.health.bmi || [];
-        let html = `<button class="btn btn-sm" onclick="window._addBMI()">➕ 記錄 BMI</button>`;
+        let html = `<button class="btn btn-sm" onclick="window._addBMI()">➕ 記錄健康</button>`;
         if (!records.length) html += `<div class="text-muted" style="padding:8px 0;">📊 尚無紀錄</div>`;
         records.forEach((r,i) => {
             let encourage = '';
             if (i>0) {
-                const map = {'過度肥胖':0,'輕度肥胖':1,'正常':2,'輕度瘦弱':3,'過度瘦弱':4};
-                if ((map[r.status]||0) < (map[records[i-1].status]||0)) encourage = '🌟進步！';
+                const prev = records[i-1];
+                const curVal = STATUS_ORDER[r.status] || 2;
+                const prevVal = STATUS_ORDER[prev.status] || 2;
+                // 只有往正常方向移動才是進步
+                if (curVal > prevVal) encourage = '🌟進步！';
+                else if (curVal < prevVal) encourage = '⚠️ 注意健康';
             }
             html += `<div class="record-card">${r.date} ${r.height}cm ${r.weight}kg BMI:${r.bmi} (${r.status}) ${encourage} <button class="btn btn-danger btn-sm right" onclick="window._delBMI(${i})">✕</button></div>`;
         });
@@ -905,11 +959,11 @@
     }
 
     window._showBMI = function() { document.getElementById('healthContent').innerHTML = renderBMI(); };
+
     window._addBMI = function() {
         if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
-        const pwd = prompt('🔒 請輸入密碼 (cherry)');
-        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-        showModal('記錄 BMI', [
+        // 輸入不用密碼
+        showModal('記錄健康程度', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'height', label: '身高 (cm)', type: 'number', placeholder: '輸入身高' },
             { key: 'weight', label: '體重 (kg)', type: 'number', placeholder: '輸入體重' }
@@ -923,13 +977,28 @@
             else if (bmi < 18.5) status = '輕度瘦弱';
             else if (bmi >= 24 && bmi < 27) status = '輕度肥胖';
             else if (bmi >= 27) status = '過度肥胖';
-            store.health.bmi.push({ date: result.date, height: h, weight: w, bmi: bmi.toFixed(1), status });
+            const records = store.health.bmi;
+            const prev = records.length > 0 ? records[records.length-1].status : null;
+            records.push({ date: result.date, height: h, weight: w, bmi: bmi.toFixed(1), status });
             save();
             window._showBMI();
+            // 貼紙
+            if (prev) {
+                const prevVal = STATUS_ORDER[prev] || 2;
+                const curVal = STATUS_ORDER[status] || 2;
+                if (curVal > prevVal) showSticker('🎉', '往健康方向進步了！');
+                else if (curVal < prevVal) showSticker('⚠️', '要更注意健康喔！');
+                else showSticker('😊', '維持良好狀態！');
+            } else {
+                showSticker('📝', '第一筆健康紀錄！');
+            }
         });
     };
+
     window._delBMI = function(i) {
         if (!confirm('刪除這筆紀錄？')) return;
+        const pwd = prompt('🔒 請輸入密碼');
+        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         store.health.bmi.splice(i,1);
         save();
         window._showBMI();
@@ -1001,7 +1070,6 @@
     // ===== 初始化 =====
     renderMain();
 
-    // 每日喝水重置
     setInterval(() => {
         const today = new Date().toISOString().slice(0,10);
         if (store.health.water.today.date !== today) {
