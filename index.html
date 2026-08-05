@@ -65,18 +65,9 @@
             border-radius: 30px;
             white-space: nowrap;
         }
-        .token-status.valid {
-            background: #e6f4e6;
-            color: #2d7a3a;
-        }
-        .token-status.invalid {
-            background: #fde8e8;
-            color: #c0392b;
-        }
-        .token-status.warning {
-            background: #fdf3e0;
-            color: #b9770e;
-        }
+        .token-status.valid { background: #e6f4e6; color: #2d7a3a; }
+        .token-status.invalid { background: #fde8e8; color: #c0392b; }
+        .token-status.warning { background: #fdf3e0; color: #b9770e; }
         .upload-btn-wrapper {
             flex: 1 1 110px;
             position: relative;
@@ -98,6 +89,7 @@
             text-align: center;
             transition: 0.2s;
             box-shadow: 0 4px 8px #8ab3d066;
+            cursor: pointer;
         }
         .upload-btn-wrapper .upload-btn:hover { background: #6f9bb8; transform: scale(0.97); }
         .main-tabs {
@@ -119,6 +111,7 @@
             transition: 0.2s;
             border: 1px solid #c5dbea;
             box-shadow: 0 2px 6px rgba(100, 140, 180, 0.05);
+            cursor: pointer;
         }
         .main-tabs button.active {
             background: #8ab3d0;
@@ -149,6 +142,7 @@
             font-weight: 500;
             color: #2f4b5e;
             border: 1px solid #d3e3ef;
+            cursor: pointer;
         }
         .sub-tabs button.active {
             background: #aac7dd;
@@ -176,10 +170,7 @@
             cursor: pointer;
         }
         .btn-icon:active { transform: scale(0.92); }
-        .btn-danger {
-            background: #d48a8a;
-            box-shadow: 0 2px 6px #d48a8a66;
-        }
+        .btn-danger { background: #d48a8a; box-shadow: 0 2px 6px #d48a8a66; }
         input, select, textarea {
             background: #ffffff;
             border: 1px solid #c8dce8;
@@ -197,6 +188,7 @@
             margin: 10px 0;
             box-shadow: 0 2px 8px #d0e0ec;
         }
+        .record-card img { max-width: 100%; border-radius: 16px; margin-top: 8px; }
         .search-bar { display: flex; gap: 6px; margin-bottom: 12px; }
         .search-bar input { flex: 1; }
         .water-track { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
@@ -207,6 +199,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 1.4rem; cursor: pointer; transition: 0.1s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            user-select: none;
         }
         .cup.filled { background: #6d9bbb; border-color: #4f7f9a; color: white; }
         .security-notice {
@@ -233,21 +226,22 @@
             margin-top: 10px;
             flex-wrap: wrap;
         }
-        .import-export .btn-icon {
-            font-size: 0.75rem;
-            padding: 4px 14px;
+        .import-export .btn-icon { font-size: 0.75rem; padding: 4px 14px; }
+        .photo-preview {
+            max-width: 100%;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 2px solid #dcebf5;
         }
         @media (max-width: 480px) { .token-upload-row input[type="password"] { flex: 1 1 100px; } }
     </style>
 </head>
 <body>
 <div class="app-wrapper" id="app">
-    <!-- 標題 -->
     <div class="app-title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
     
-    <!-- Token + 上傳 -->
     <div class="token-upload-row">
-        <input type="password" id="githubToken" placeholder="🔑 請輸入 GitHub Token (ghp_...)" value="">
+        <input type="password" id="githubToken" placeholder="🔑 GitHub Token (ghp_...)" value="">
         <span class="token-status invalid" id="tokenStatus">⚠️ 請設定 Token</span>
         <span class="token-helper">ghp_xxxx</span>
         <div class="upload-btn-wrapper">
@@ -256,564 +250,539 @@
         </div>
     </div>
 
-    <!-- 主功能 tabs -->
     <div class="main-tabs">
         <button class="active" data-tab="study">📚 學習</button>
         <button data-tab="diary">📖 日記</button>
         <button data-tab="health">❤️ 健康</button>
     </div>
 
-    <div class="content-panel" id="mainPanel">
-        <!-- 動態內容 -->
-    </div>
+    <div class="content-panel" id="mainPanel"></div>
 
-    <!-- 匯入/匯出 -->
     <div class="import-export">
         <button class="btn-icon" id="exportDataBtn">📤 匯出資料</button>
         <button class="btn-icon" id="importDataBtn">📥 匯入資料</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none;">
     </div>
     
-    <div class="security-notice">
-        🔒 資料僅儲存在此裝置，請定期備份
-    </div>
+    <div class="security-notice">🔒 資料僅儲存在此裝置，請定期備份</div>
 </div>
 
 <script>
-    (function(){
-        // ---------- 儲存金鑰 ----------
-        const STORAGE_KEY = 'cherry_app_data_encrypted';
-        const TOKEN_KEY = 'cherry_github_token';
-        
-        // 簡單編碼
-        function simpleEncode(str) {
-            return btoa(encodeURIComponent(str));
+(function(){
+    const STORAGE_KEY = 'cherry_app_data_encrypted';
+    const TOKEN_KEY = 'cherry_github_token';
+    
+    function simpleEncode(str) { return btoa(encodeURIComponent(str)); }
+    function simpleDecode(str) {
+        try { return decodeURIComponent(atob(str)); }
+        catch(e) { return null; }
+    }
+
+    function saveStore(store) {
+        try {
+            localStorage.setItem(STORAGE_KEY, simpleEncode(JSON.stringify(store)));
+            return true;
+        } catch(e) { return false; }
+    }
+
+    function loadStore() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (!data) return null;
+            return JSON.parse(simpleDecode(data));
+        } catch(e) { return null; }
+    }
+
+    function isValidGitHubToken(token) {
+        return /^ghp_[A-Za-z0-9]{36,40}$/.test(token);
+    }
+
+    // 初始化
+    let store = {
+        token: localStorage.getItem(TOKEN_KEY) || '',
+        study: { calendar: [], todos: [], grades: {} },
+        diary: { entries: [] },
+        health: {
+            bmiRecords: [],
+            water: { today: { date: '', cups: 0 }, history: [] },
+            exercises: []
         }
-        function simpleDecode(str) {
+    };
+
+    const saved = loadStore();
+    if (saved) store = saved;
+
+    const tokenInput = document.getElementById('githubToken');
+    tokenInput.value = store.token || '';
+
+    tokenInput.addEventListener('change', function() {
+        store.token = this.value.trim();
+        localStorage.setItem(TOKEN_KEY, store.token);
+        saveStore(store);
+        updateTokenStatus();
+    });
+
+    function updateTokenStatus() {
+        const el = document.getElementById('tokenStatus');
+        const token = tokenInput.value.trim();
+        if (!token) { el.textContent = '⚠️ 請設定 Token'; el.className = 'token-status invalid'; }
+        else if (isValidGitHubToken(token)) { el.textContent = '✅ 有效'; el.className = 'token-status valid'; }
+        else { el.textContent = '⚠️ 格式錯誤'; el.className = 'token-status warning'; }
+    }
+
+    // 圖片上傳
+    let pendingImage = null;
+    document.getElementById('uploadImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            pendingImage = ev.target.result;
+            alert('📸 圖片已上傳！請到日記中新增使用。');
+            switchMainTab('diary');
+        };
+        reader.readAsDataURL(file);
+        this.value = '';
+    });
+
+    // 匯出匯入
+    document.getElementById('exportDataBtn').addEventListener('click', function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (!data) { alert('沒有資料'); return; }
+        const blob = new Blob([data], {type: 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `cherry_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+    });
+
+    document.getElementById('importDataBtn').addEventListener('click', function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        document.getElementById('importFileInput').click();
+    });
+
+    document.getElementById('importFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
             try {
-                return decodeURIComponent(atob(str));
-            } catch(e) {
-                return null;
-            }
-        }
-
-        // 儲存資料
-        function saveStore(store) {
-            try {
-                const json = JSON.stringify(store);
-                const encoded = simpleEncode(json);
-                localStorage.setItem(STORAGE_KEY, encoded);
-                return true;
-            } catch(e) {
-                console.error('儲存失敗', e);
-                return false;
-            }
-        }
-
-        // 載入資料
-        function loadStore() {
-            try {
-                const encoded = localStorage.getItem(STORAGE_KEY);
-                if (!encoded) return null;
-                const json = simpleDecode(encoded);
-                if (!json) return null;
-                return JSON.parse(json);
-            } catch(e) {
-                console.error('載入失敗', e);
-                return null;
-            }
-        }
-
-        // 驗證 GitHub Token 格式
-        function isValidGitHubToken(token) {
-            return /^ghp_[A-Za-z0-9]{36,40}$/.test(token);
-        }
-
-        // ---------- 初始化儲存 ----------
-        let store = {
-            token: localStorage.getItem(TOKEN_KEY) || '',
-            study: {
-                calendar: [],
-                todos: [],
-                grades: {}
-            },
-            diary: {
-                entries: []
-            },
-            health: {
-                bmiRecords: [],
-                water: {
-                    today: { date: '', cups: 0 },
-                    history: []
-                },
-                exercises: []
+                const data = ev.target.result;
+                JSON.parse(simpleDecode(data) || '{}');
+                localStorage.setItem(STORAGE_KEY, data);
+                alert('✅ 匯入成功！重新整理頁面。');
+                location.reload();
+            } catch(err) {
+                alert('❌ 檔案格式錯誤');
             }
         };
+        reader.readAsText(file);
+        this.value = '';
+    });
 
-        const savedData = loadStore();
-        if (savedData) {
-            store = savedData;
-        }
+    // 渲染
+    let currentMain = 'study';
+    let currentSub = 'calendar';
 
-        // 設定 Token 輸入框
-        const tokenInput = document.getElementById('githubToken');
-        tokenInput.value = store.token || '';
-
-        // Token 變更時儲存
-        tokenInput.addEventListener('change', function(e) {
-            const newToken = e.target.value.trim();
-            store.token = newToken;
-            localStorage.setItem(TOKEN_KEY, newToken);
-            saveStore(store);
-            updateTokenStatus();
+    function switchMainTab(tab) {
+        currentMain = tab;
+        document.querySelectorAll('.main-tabs button').forEach(b => {
+            b.classList.toggle('active', b.dataset.tab === tab);
         });
-
-        // 更新 Token 狀態
-        function updateTokenStatus() {
-            const statusEl = document.getElementById('tokenStatus');
-            const token = tokenInput.value.trim();
-            
-            if (!token) {
-                statusEl.textContent = '⚠️ 請設定 Token';
-                statusEl.className = 'token-status invalid';
-            } else if (isValidGitHubToken(token)) {
-                statusEl.textContent = '✅ GitHub Token 有效';
-                statusEl.className = 'token-status valid';
-            } else {
-                statusEl.textContent = '⚠️ 格式錯誤 (須以 ghp_ 開頭)';
-                statusEl.className = 'token-status warning';
-            }
-        }
-
-        // 圖片上傳
-        document.getElementById('uploadImage').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                window._pendingImage = ev.target.result;
-                alert('📸 圖片已上傳！請在日記中按「+ 新增」使用。');
-                switchMainTab('diary');
-            };
-            reader.readAsDataURL(file);
-            e.target.value = '';
-        });
-
-        // ---------- 匯出 / 匯入 ----------
-        document.getElementById('exportDataBtn').addEventListener('click', function() {
-            const token = tokenInput.value.trim();
-            if (!isValidGitHubToken(token)) {
-                alert('⚠️ 請先設定有效的 GitHub Token');
-                return;
-            }
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (!data) {
-                alert('沒有資料可匯出');
-                return;
-            }
-            const blob = new Blob([data], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `cherry_backup_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            alert('✅ 資料匯出成功！');
-        });
-
-        document.getElementById('importDataBtn').addEventListener('click', function() {
-            const token = tokenInput.value.trim();
-            if (!isValidGitHubToken(token)) {
-                alert('⚠️ 請先設定有效的 GitHub Token');
-                return;
-            }
-            document.getElementById('importFileInput').click();
-        });
-
-        document.getElementById('importFileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                try {
-                    const data = ev.target.result;
-                    // 驗證是否為有效的 JSON
-                    JSON.parse(simpleDecode(data) || '{}');
-                    localStorage.setItem(STORAGE_KEY, data);
-                    alert('✅ 資料匯入成功！請重新整理頁面。');
-                    location.reload();
-                } catch(err) {
-                    alert('❌ 檔案格式錯誤，請確認是正確的備份檔');
-                }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        });
-
-        // ---------- 渲染引擎 ----------
-        let currentMain = 'study';
-        let currentSub = 'calendar';
-
-        function switchMainTab(tab) {
-            currentMain = tab;
-            document.querySelectorAll('.main-tabs button').forEach(b => {
-                b.classList.toggle('active', b.dataset.tab === tab);
-            });
-            renderMain();
-        }
-
-        document.querySelectorAll('.main-tabs button').forEach(btn => {
-            btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
-        });
-
-        function switchSubTab(sub) {
-            currentSub = sub;
-            renderMain();
-        }
-
-        function renderMain() {
-            const panel = document.getElementById('mainPanel');
-            if (currentMain === 'study') {
-                panel.innerHTML = renderStudy();
-                panel.querySelectorAll('.sub-tabs button').forEach(b => {
-                    b.addEventListener('click', () => switchSubTab(b.dataset.sub));
-                });
-                const subContainer = panel.querySelector('.sub-content');
-                if (currentSub === 'calendar') subContainer.innerHTML = renderCalendar();
-                else if (currentSub === 'todos') subContainer.innerHTML = renderTodos();
-                else if (currentSub === 'grades') subContainer.innerHTML = renderGrades();
-            } else if (currentMain === 'diary') {
-                panel.innerHTML = renderDiary();
-            } else if (currentMain === 'health') {
-                panel.innerHTML = renderHealth();
-            }
-            attachDynamicEvents();
-            updateTokenStatus();
-        }
-
-        // ---------- 學習功能 ----------
-        function renderStudy() {
-            const subs = ['calendar', 'todos', 'grades'];
-            const labels = ['📅 日曆', '✅ 備忘錄', '📊 成績'];
-            let html = `<div class="sub-tabs">`;
-            subs.forEach((s, i) => {
-                html += `<button data-sub="${s}" class="${s===currentSub?'active':''}">${labels[i]}</button>`;
-            });
-            html += `</div><div class="sub-content" id="subContent"></div>`;
-            return html;
-        }
-
-        function renderCalendar() {
-            const items = store.study.calendar || [];
-            let html = `<div class="flex-row"><button class="btn-icon" data-action="addCalendar">➕ 新增</button></div>`;
-            html += `<div id="calendarList">`;
-            if (items.length===0) html += `<p style="color:#8a9ba8;padding:12px;">✨ 還沒有行程</p>`;
-            items.forEach((item, idx) => {
-                html += `<div class="record-card">📌 <strong>${item.date||'無日期'}</strong> — ${item.content||''} <span style="float:right;"><button class="btn-icon btn-danger" data-action="delCalendar" data-idx="${idx}">🗑️</button></span></div>`;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        function renderTodos() {
-            const todos = store.study.todos || [];
-            let html = `<div class="flex-row"><button class="btn-icon" data-action="addTodo">➕ 新增待辦</button></div>`;
-            html += `<div id="todoList">`;
-            if (todos.length===0) html += `<p style="color:#8a9ba8;padding:12px;">✨ 沒有待辦事項</p>`;
-            todos.forEach((t, idx) => {
-                html += `<div class="record-card">${t.done ? '✅' : '⭕'} ${t.text} <span style="float:right;"><button class="btn-icon" data-action="toggleTodo" data-idx="${idx}">${t.done ? '↩️ 復原' : '✅ 完成'}</button> <button class="btn-icon btn-danger" data-action="delTodo" data-idx="${idx}">🗑️</button></span></div>`;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        function renderGrades() {
-            const grades = store.study.grades || {};
-            const semesters = Object.keys(grades).sort();
-            const subjects = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
-            let html = `<div class="flex-row"><button class="btn-icon" data-action="addGrade">➕ 新增成績</button></div>`;
-            html += `<div style="max-height:300px;overflow-y:auto;">`;
-            if (semesters.length===0) html += `<p style="color:#8a9ba8;padding:12px;">📂 尚未建立學段</p>`;
-            semesters.forEach(sem => {
-                html += `<details><summary><strong>📁 ${sem}</strong></summary>`;
-                const semData = grades[sem] || {};
-                subjects.forEach(sub => {
-                    const records = semData[sub] || [];
-                    if (records.length===0) {
-                        html += `<div style="padding:4px 12px;">${sub}：暫無記錄</div>`;
-                    } else {
-                        html += `<div style="padding:6px 12px;background:#eef6fc;border-radius:20px;margin:4px 0;"><strong>${sub}</strong>`;
-                        let prev = null;
-                        records.forEach((r, idx) => {
-                            const encourage = (prev && r.score > prev.score) ? ' 🎉 進步了！' : (prev && r.score < prev.score ? ' 📉 加油' : '');
-                            html += `<div style="font-size:0.9rem;padding:2px 0;">📅 ${r.date||''} 分數：${r.score} ${r.note?'('+r.note+')':''} ${encourage} <button class="btn-icon btn-danger" data-action="delGrade" data-sem="${sem}" data-sub="${sub}" data-idx="${idx}">🗑️</button></div>`;
-                            prev = r;
-                        });
-                        html += `</div>`;
-                    }
-                });
-                html += `</details>`;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        // ---------- 日記 ----------
-        function renderDiary() {
-            const entries = store.diary.entries || [];
-            let html = `<div class="flex-row"><button class="btn-icon" data-action="addDiary">➕ 新增日記</button></div>`;
-            html += `<div class="search-bar"><input type="date" id="diarySearch" placeholder="搜尋日期"><button class="btn-icon" data-action="searchDiary">🔍</button></div>`;
-            html += `<div id="diaryList">`;
-            if (entries.length===0) html += `<p style="color:#8a9ba8;padding:12px;">📖 還沒有日記</p>`;
-            const show = entries.slice(-5).reverse();
-            show.forEach(entry => {
-                html += `<div class="record-card">📅 ${entry.date||''} ${entry.weather||''} ${entry.mood||''}<br>${entry.content||''} ${entry.image ? '🖼️' : ''} <span style="float:right;"><button class="btn-icon" data-action="editDiary" data-id="${entry.id}">✏️</button></span></div>`;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        // ---------- 健康 ----------
-        function renderHealth() {
-            let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                <button class="btn-icon" data-action="showBMI">🧮 BMI</button>
-                <button class="btn-icon" data-action="showWater">💧 喝水</button>
-                <button class="btn-icon" data-action="showExercise">🏃 運動</button>
-            </div>`;
-            html += `<div id="healthContent">`;
-            html += renderBMI();
-            html += `</div>`;
-            return html;
-        }
-
-        function renderBMI() {
-            const records = store.health.bmiRecords || [];
-            let html = `<div class="flex-row"><button class="btn-icon" data-action="addBMI">➕ 記錄 BMI</button></div>`;
-            html += `<div style="max-height:240px;overflow-y:auto;">`;
-            if (records.length===0) html += `<p style="color:#8a9ba8;padding:12px;">📊 還沒有 BMI 紀錄</p>`;
-            records.forEach((r, idx) => {
-                let encourage = '';
-                if (idx>0) {
-                    const prev = records[idx-1];
-                    const statusMap = {'過度肥胖':0,'輕度肥胖':1,'正常':2,'輕度瘦弱':3,'過度瘦弱':4};
-                    const cur = statusMap[r.status]||0, pre = statusMap[prev.status]||0;
-                    if (cur < pre) encourage = ' 🌟 進步鼓勵！';
-                }
-                html += `<div class="record-card">${r.date} 身高${r.height} 體重${r.weight} BMI:${r.bmi} (${r.status}) ${encourage} <span style="float:right;"><button class="btn-icon btn-danger" data-action="delBMI" data-idx="${idx}">🗑️</button></span></div>`;
-            });
-            html += `</div>`;
-            return html;
-        }
-
-        // ---------- 事件代理 ----------
-        function attachDynamicEvents() {
-            const panel = document.getElementById('mainPanel');
-            panel.addEventListener('click', function(e) {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-                const action = target.dataset.action;
-                
-                // 檢查 Token
-                const token = tokenInput.value.trim();
-                if (!isValidGitHubToken(token)) {
-                    alert('⚠️ 請先設定有效的 GitHub Token (格式：ghp_xxxxxxxx)');
-                    return;
-                }
-
-                // 執行各種操作
-                if (action === 'addCalendar') {
-                    const date = prompt('📅 日期 (YYYY-MM-DD)');
-                    if (!date) return;
-                    const content = prompt('📝 內容');
-                    if (content===null) return;
-                    store.study.calendar.push({ date, content });
-                    saveStore(store); renderMain();
-                } else if (action === 'delCalendar') {
-                    if (!confirm('確定要刪除嗎？')) return;
-                    const idx = parseInt(target.dataset.idx);
-                    store.study.calendar.splice(idx,1);
-                    saveStore(store); renderMain();
-                } else if (action === 'addTodo') {
-                    const text = prompt('✏️ 待辦事項');
-                    if (!text) return;
-                    store.study.todos.push({ id: Date.now(), text, done: false });
-                    saveStore(store); renderMain();
-                } else if (action === 'toggleTodo') {
-                    const idx = parseInt(target.dataset.idx);
-                    store.study.todos[idx].done = !store.study.todos[idx].done;
-                    if (store.study.todos[idx].done) {
-                        store.study.todos.splice(idx,1);
-                    }
-                    saveStore(store); renderMain();
-                } else if (action === 'delTodo') {
-                    if (!confirm('確定要刪除嗎？')) return;
-                    const idx = parseInt(target.dataset.idx);
-                    store.study.todos.splice(idx,1);
-                    saveStore(store); renderMain();
-                } else if (action === 'addGrade') {
-                    const sem = prompt('學段 (例如 2024/2025 第一段)');
-                    if (!sem) return;
-                    const sub = prompt('科目 (宗教,公民,語文,英文,數學,中國歷史,世界歷史,地理,物理,化學,生物,資訊科技,體育,音樂,藝術,其他)');
-                    if (!sub) return;
-                    const date = prompt('日期 (YYYY-MM-DD)');
-                    if (!date) return;
-                    const score = parseFloat(prompt('分數'));
-                    if (isNaN(score)) return;
-                    const note = prompt('補充 (可空白)') || '';
-                    if (!store.study.grades[sem]) store.study.grades[sem] = {};
-                    if (!store.study.grades[sem][sub]) store.study.grades[sem][sub] = [];
-                    store.study.grades[sem][sub].push({ date, score, note });
-                    saveStore(store); renderMain();
-                } else if (action === 'delGrade') {
-                    if (!confirm('確定要刪除嗎？')) return;
-                    const sem = target.dataset.sem, sub = target.dataset.sub, idx = parseInt(target.dataset.idx);
-                    if (store.study.grades[sem] && store.study.grades[sem][sub]) {
-                        store.study.grades[sem][sub].splice(idx,1);
-                        if (store.study.grades[sem][sub].length===0) delete store.study.grades[sem][sub];
-                        if (Object.keys(store.study.grades[sem]).length===0) delete store.study.grades[sem];
-                    }
-                    saveStore(store); renderMain();
-                } else if (action === 'addDiary') {
-                    const pwd = prompt('🔒 請輸入密碼 (cherry)');
-                    if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-                    const date = prompt('日期 (YYYY-MM-DD)');
-                    if (!date) return;
-                    const weather = prompt('天氣 (晴/陰/雨/雪)') || '';
-                    const mood = prompt('心情 (開心/普通/難過)') || '';
-                    const content = prompt('內容') || '';
-                    const image = window._pendingImage || '';
-                    window._pendingImage = null;
-                    store.diary.entries.push({ id: Date.now(), date, weather, mood, content, image });
-                    saveStore(store); renderMain();
-                } else if (action === 'editDiary') {
-                    const id = parseInt(target.dataset.id);
-                    const entry = store.diary.entries.find(e => e.id === id);
-                    if (!entry) return;
-                    const pwd = prompt('🔒 輸入密碼修改 (cherry)');
-                    if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-                    const newContent = prompt('修改內容', entry.content);
-                    if (newContent !== null) entry.content = newContent;
-                    const newDate = prompt('修改日期', entry.date);
-                    if (newDate !== null) entry.date = newDate;
-                    saveStore(store); renderMain();
-                } else if (action === 'searchDiary') {
-                    const date = document.getElementById('diarySearch')?.value;
-                    if (!date) { alert('請輸入日期'); return; }
-                    const found = store.diary.entries.filter(e => e.date === date);
-                    if (found.length===0) alert('沒有找到當天日記');
-                    else {
-                        let msg = found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n');
-                        alert(msg);
-                    }
-                } else if (action === 'addBMI') {
-                    const pwd = prompt('🔒 密碼 (cherry)');
-                    if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-                    const date = prompt('日期') || '';
-                    const height = parseFloat(prompt('身高 (cm)'));
-                    const weight = parseFloat(prompt('體重 (kg)'));
-                    const age = parseInt(prompt('年齡'));
-                    const gender = prompt('性別 (男/女)');
-                    if (isNaN(height)||isNaN(weight)||isNaN(age)) return;
-                    const bmi = weight / ((height/100)**2);
-                    let status = '正常';
-                    if (bmi < 18.5) status = '輕度瘦弱';
-                    else if (bmi < 16) status = '過度瘦弱';
-                    else if (bmi >= 24 && bmi < 27) status = '輕度肥胖';
-                    else if (bmi >= 27) status = '過度肥胖';
-                    store.health.bmiRecords.push({ date, height, weight, age, gender, bmi: bmi.toFixed(1), status });
-                    saveStore(store); renderMain();
-                } else if (action === 'delBMI') {
-                    if (!confirm('確定要刪除嗎？')) return;
-                    const idx = parseInt(target.dataset.idx);
-                    store.health.bmiRecords.splice(idx,1);
-                    saveStore(store); renderMain();
-                } else if (action === 'showBMI') {
-                    document.getElementById('healthContent').innerHTML = renderBMI();
-                } else if (action === 'showWater') {
-                    let html = `<div class="water-track" id="waterTrack">`;
-                    const today = new Date().toISOString().slice(0,10);
-                    let water = store.health.water;
-                    if (water.today.date !== today) { water.today = { date: today, cups: 0 }; saveStore(store); }
-                    for (let i=0;i<8;i++) {
-                        const filled = i < water.today.cups ? 'filled' : '';
-                        html += `<div class="cup ${filled}" data-cup="${i}">${i<water.today.cups?'💧':'🥤'}</div>`;
-                    }
-                    html += `</div><div>今日已喝 ${water.today.cups} / 8 杯</div>`;
-                    html += `<div class="flex-row"><button class="btn-icon" data-action="resetWater">🔄 重置今日</button><button class="btn-icon" data-action="waterHistory">📋 歷史</button></div>`;
-                    document.getElementById('healthContent').innerHTML = html;
-                    document.querySelectorAll('.cup').forEach(c => {
-                        c.addEventListener('click', function() {
-                            const idx = parseInt(this.dataset.cup);
-                            if (idx < store.health.water.today.cups) return;
-                            store.health.water.today.cups = Math.min(8, idx+1);
-                            saveStore(store);
-                            renderMain();
-                            document.querySelector('[data-action="showWater"]')?.click();
-                        });
-                    });
-                } else if (action === 'resetWater') {
-                    if (!confirm('確定要重置今日喝水紀錄嗎？')) return;
-                    store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
-                    store.health.water.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
-                    saveStore(store); renderMain();
-                    document.querySelector('[data-action="showWater"]')?.click();
-                } else if (action === 'waterHistory') {
-                    const hist = store.health.water.history || [];
-                    let msg = '📋 喝水歷史\n';
-                    hist.forEach(h => msg += `${h.date} : ${h.cups} 杯\n`);
-                    alert(msg || '尚無歷史');
-                } else if (action === 'showExercise') {
-                    let html = `<div class="flex-row"><button class="btn-icon" data-action="addExercise">➕ 記錄運動</button></div>`;
-                    const ex = store.health.exercises || [];
-                    ex.forEach((e, i) => {
-                        html += `<div class="record-card">🏃 ${e.date} ${e.type} ${e.duration}分 ${e.note||''} <button class="btn-icon btn-danger" data-action="delExercise" data-idx="${i}">🗑️</button></div>`;
-                    });
-                    if (ex.length===0) html += `<p style="color:#8a9ba8;padding:12px;">🏋️ 還沒有運動記錄</p>`;
-                    document.getElementById('healthContent').innerHTML = html;
-                } else if (action === 'addExercise') {
-                    const date = prompt('日期') || '';
-                    const type = prompt('運動類型 (跑步/游泳/跳繩/其他)') || '';
-                    const duration = parseInt(prompt('分鐘數')) || 0;
-                    const note = prompt('備註') || '';
-                    store.health.exercises.push({ date, type, duration, note });
-                    saveStore(store); renderMain();
-                    document.querySelector('[data-action="showExercise"]')?.click();
-                } else if (action === 'delExercise') {
-                    if (!confirm('確定要刪除嗎？')) return;
-                    const idx = parseInt(target.dataset.idx);
-                    store.health.exercises.splice(idx,1);
-                    saveStore(store); renderMain();
-                    document.querySelector('[data-action="showExercise"]')?.click();
-                }
-            });
-        }
-
-        // ---------- 初始化 ----------
         renderMain();
-        updateTokenStatus();
+    }
 
-        // 每日重置喝水
-        function checkWaterReset() {
-            const today = new Date().toISOString().slice(0,10);
-            if (store.health.water.today.date !== today) {
-                store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
-                store.health.water.today = { date: today, cups: 0 };
-                saveStore(store);
-            }
+    document.querySelectorAll('.main-tabs button').forEach(btn => {
+        btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+    });
+
+    function switchSubTab(sub) {
+        currentSub = sub;
+        renderMain();
+    }
+
+    function renderMain() {
+        const panel = document.getElementById('mainPanel');
+        if (currentMain === 'study') {
+            panel.innerHTML = renderStudy();
+            panel.querySelectorAll('.sub-tabs button').forEach(b => {
+                b.addEventListener('click', () => switchSubTab(b.dataset.sub));
+            });
+            const subContainer = panel.querySelector('.sub-content');
+            if (currentSub === 'calendar') subContainer.innerHTML = renderCalendar();
+            else if (currentSub === 'todos') subContainer.innerHTML = renderTodos();
+            else if (currentSub === 'grades') subContainer.innerHTML = renderGrades();
+        } else if (currentMain === 'diary') {
+            panel.innerHTML = renderDiary();
+        } else if (currentMain === 'health') {
+            panel.innerHTML = renderHealth();
         }
-        setInterval(checkWaterReset, 60000);
-        checkWaterReset();
+        attachEvents();
+        updateTokenStatus();
+    }
 
-        // 自動儲存 Token
-        window.addEventListener('beforeunload', function() {
-            const token = tokenInput.value.trim();
-            if (token) {
-                store.token = token;
-                localStorage.setItem(TOKEN_KEY, token);
-                saveStore(store);
-            }
+    // ===== 學習 =====
+    function renderStudy() {
+        return `<div class="sub-tabs">
+            <button data-sub="calendar" class="${currentSub==='calendar'?'active':''}">📅 日曆</button>
+            <button data-sub="todos" class="${currentSub==='todos'?'active':''}">✅ 備忘錄</button>
+            <button data-sub="grades" class="${currentSub==='grades'?'active':''}">📊 成績</button>
+        </div><div class="sub-content"></div>`;
+    }
+
+    function renderCalendar() {
+        const items = store.study.calendar || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addCalendar()">➕ 新增行程</button></div>`;
+        if (items.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📅 還沒有行程</p>`;
+        items.forEach((item, idx) => {
+            html += `<div class="record-card">📌 <strong>${item.date||'無日期'}</strong> — ${item.content||''} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delCalendar(${idx})">🗑️</button></div>`;
         });
-    })();
+        return html;
+    }
+
+    window.addCalendar = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const date = prompt('📅 日期 (YYYY-MM-DD)');
+        if (!date) return;
+        const content = prompt('📝 內容');
+        if (content === null) return;
+        store.study.calendar.push({ date, content });
+        saveStore(store);
+        renderMain();
+    };
+
+    window.delCalendar = function(idx) {
+        if (!confirm('確定刪除嗎？')) return;
+        store.study.calendar.splice(idx, 1);
+        saveStore(store);
+        renderMain();
+    };
+
+    function renderTodos() {
+        const todos = store.study.todos || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addTodo()">➕ 新增待辦</button></div>`;
+        if (todos.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">✨ 沒有待辦事項</p>`;
+        todos.forEach((t, idx) => {
+            html += `<div class="record-card">${t.done ? '✅' : '⭕'} ${t.text} <button class="btn-icon" style="float:right;margin-left:4px;" onclick="window.toggleTodo(${idx})">${t.done ? '↩️' : '✅'}</button></div>`;
+        });
+        return html;
+    }
+
+    window.addTodo = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const text = prompt('✏️ 待辦事項');
+        if (!text) return;
+        store.study.todos.push({ id: Date.now(), text, done: false });
+        saveStore(store);
+        renderMain();
+    };
+
+    window.toggleTodo = function(idx) {
+        store.study.todos[idx].done = !store.study.todos[idx].done;
+        if (store.study.todos[idx].done) {
+            store.study.todos.splice(idx, 1);
+        }
+        saveStore(store);
+        renderMain();
+    };
+
+    function renderGrades() {
+        const grades = store.study.grades || {};
+        const semesters = Object.keys(grades).sort();
+        const subjects = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
+        
+        // 預設學段
+        const defaultSemesters = ['2024/2025 第一段', '2024/2025 第二段', '2025/2026 第一段', '2025/2026 第二段'];
+        defaultSemesters.forEach(sem => {
+            if (!grades[sem]) grades[sem] = {};
+        });
+        store.study.grades = grades;
+        saveStore(store);
+
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addGrade()">➕ 新增成績</button></div>`;
+        const allSemesters = Object.keys(grades).sort();
+        if (allSemesters.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📂 尚未建立學段</p>`;
+        allSemesters.forEach(sem => {
+            html += `<details><summary><strong>📁 ${sem}</strong></summary>`;
+            subjects.forEach(sub => {
+                const records = grades[sem]?.[sub] || [];
+                if (records.length === 0) {
+                    html += `<div style="padding:4px 12px;">${sub}：暫無記錄</div>`;
+                } else {
+                    html += `<div style="padding:6px 12px;background:#eef6fc;border-radius:20px;margin:4px 0;"><strong>${sub}</strong>`;
+                    let prev = null;
+                    records.forEach((r, idx) => {
+                        const encourage = (prev && r.score > prev.score) ? ' 🎉 進步了！' : (prev && r.score < prev.score ? ' 📉 加油' : '');
+                        html += `<div style="font-size:0.9rem;padding:2px 0;">📅 ${r.date||''} 分數：${r.score} ${r.note?'('+r.note+')':''} ${encourage} <button class="btn-icon btn-danger" onclick="window.delGrade('${sem}','${sub}',${idx})">🗑️</button></div>`;
+                        prev = r;
+                    });
+                    html += `</div>`;
+                }
+            });
+            html += `</details>`;
+        });
+        return html;
+    }
+
+    window.addGrade = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const sem = prompt('學段 (例如 2024/2025 第一段)');
+        if (!sem) return;
+        const sub = prompt('科目 (宗教,公民,語文,英文,數學,中國歷史,世界歷史,地理,物理,化學,生物,資訊科技,體育,音樂,藝術,其他)');
+        if (!sub) return;
+        const date = prompt('日期 (YYYY-MM-DD)');
+        if (!date) return;
+        const score = parseFloat(prompt('分數'));
+        if (isNaN(score)) return;
+        const note = prompt('補充 (可空白)') || '';
+        if (!store.study.grades[sem]) store.study.grades[sem] = {};
+        if (!store.study.grades[sem][sub]) store.study.grades[sem][sub] = [];
+        store.study.grades[sem][sub].push({ date, score, note });
+        saveStore(store);
+        renderMain();
+    };
+
+    window.delGrade = function(sem, sub, idx) {
+        if (!confirm('確定刪除嗎？')) return;
+        if (store.study.grades[sem]?.[sub]) {
+            store.study.grades[sem][sub].splice(idx, 1);
+            if (store.study.grades[sem][sub].length === 0) delete store.study.grades[sem][sub];
+            if (Object.keys(store.study.grades[sem]).length === 0) delete store.study.grades[sem];
+            saveStore(store);
+            renderMain();
+        }
+    };
+
+    // ===== 日記 =====
+    function renderDiary() {
+        const entries = store.diary.entries || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addDiary()">➕ 新增日記</button></div>`;
+        html += `<div class="search-bar"><input type="date" id="diarySearch"><button class="btn-icon" onclick="window.searchDiary()">🔍</button></div>`;
+        html += `<div id="diaryList">`;
+        if (entries.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📖 還沒有日記</p>`;
+        const show = entries.slice(-10).reverse();
+        show.forEach(entry => {
+            html += `<div class="record-card">📅 ${entry.date||''} ${entry.weather||''} ${entry.mood||''}<br>${entry.content||''}`;
+            if (entry.image) html += `<br><img src="${entry.image}" class="photo-preview">`;
+            html += ` <button class="btn-icon" style="float:right;" onclick="window.editDiary(${entry.id})">✏️</button></div>`;
+        });
+        html += `</div>`;
+        return html;
+    }
+
+    window.addDiary = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const pwd = prompt('🔒 請輸入密碼 (cherry)');
+        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
+        const date = prompt('日期 (YYYY-MM-DD)');
+        if (!date) return;
+        const weather = prompt('天氣 (晴/陰/雨/雪)') || '';
+        const mood = prompt('心情 (開心/普通/難過)') || '';
+        const content = prompt('內容') || '';
+        const image = pendingImage || '';
+        pendingImage = null;
+        store.diary.entries.push({ id: Date.now(), date, weather, mood, content, image });
+        saveStore(store);
+        renderMain();
+    };
+
+    window.editDiary = function(id) {
+        const entry = store.diary.entries.find(e => e.id === id);
+        if (!entry) return;
+        const pwd = prompt('🔒 輸入密碼修改 (cherry)');
+        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
+        const newContent = prompt('修改內容', entry.content);
+        if (newContent !== null) entry.content = newContent;
+        const newDate = prompt('修改日期', entry.date);
+        if (newDate !== null) entry.date = newDate;
+        saveStore(store);
+        renderMain();
+    };
+
+    window.searchDiary = function() {
+        const date = document.getElementById('diarySearch')?.value;
+        if (!date) { alert('請輸入日期'); return; }
+        const found = store.diary.entries.filter(e => e.date === date);
+        if (found.length === 0) alert('沒有找到當天日記');
+        else {
+            let msg = found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n');
+            alert(msg);
+        }
+    };
+
+    // ===== 健康 =====
+    function renderHealth() {
+        let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="btn-icon" onclick="window.showBMI()">🧮 BMI</button>
+            <button class="btn-icon" onclick="window.showWater()">💧 喝水</button>
+            <button class="btn-icon" onclick="window.showExercise()">🏃 運動</button>
+        </div><div id="healthContent">`;
+        html += renderBMI();
+        html += `</div>`;
+        return html;
+    }
+
+    function renderBMI() {
+        const records = store.health.bmiRecords || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addBMI()">➕ 記錄 BMI</button></div>`;
+        if (records.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📊 還沒有 BMI 紀錄</p>`;
+        records.forEach((r, idx) => {
+            let encourage = '';
+            if (idx > 0) {
+                const prev = records[idx-1];
+                const statusMap = {'過度肥胖':0,'輕度肥胖':1,'正常':2,'輕度瘦弱':3,'過度瘦弱':4};
+                const cur = statusMap[r.status]||0, pre = statusMap[prev.status]||0;
+                if (cur < pre) encourage = ' 🌟 進步鼓勵！';
+            }
+            html += `<div class="record-card">${r.date} 身高${r.height} 體重${r.weight} BMI:${r.bmi} (${r.status}) ${encourage} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delBMI(${idx})">🗑️</button></div>`;
+        });
+        return html;
+    }
+
+    window.addBMI = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const pwd = prompt('🔒 密碼 (cherry)');
+        if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
+        const date = prompt('日期') || '';
+        const height = parseFloat(prompt('身高 (cm)'));
+        const weight = parseFloat(prompt('體重 (kg)'));
+        const age = parseInt(prompt('年齡'));
+        const gender = prompt('性別 (男/女)');
+        if (isNaN(height)||isNaN(weight)||isNaN(age)) return;
+        const bmi = weight / ((height/100)**2);
+        let status = '正常';
+        if (bmi < 16) status = '過度瘦弱';
+        else if (bmi < 18.5) status = '輕度瘦弱';
+        else if (bmi >= 24 && bmi < 27) status = '輕度肥胖';
+        else if (bmi >= 27) status = '過度肥胖';
+        store.health.bmiRecords.push({ date, height, weight, age, gender, bmi: bmi.toFixed(1), status });
+        saveStore(store);
+        renderMain();
+    };
+
+    window.delBMI = function(idx) {
+        if (!confirm('確定刪除嗎？')) return;
+        store.health.bmiRecords.splice(idx, 1);
+        saveStore(store);
+        renderMain();
+    };
+
+    window.showBMI = function() {
+        document.getElementById('healthContent').innerHTML = renderBMI();
+        attachEvents();
+    };
+
+    window.showWater = function() {
+        const today = new Date().toISOString().slice(0,10);
+        let water = store.health.water;
+        if (water.today.date !== today) { 
+            water.today = { date: today, cups: 0 }; 
+            saveStore(store);
+        }
+        let html = `<div class="water-track">`;
+        for (let i=0; i<8; i++) {
+            const filled = i < water.today.cups ? 'filled' : '';
+            html += `<div class="cup ${filled}" onclick="window.addCup(${i})">${i<water.today.cups?'💧':'🥤'}</div>`;
+        }
+        html += `</div><div>今日已喝 ${water.today.cups} / 8 杯</div>`;
+        html += `<div class="flex-row"><button class="btn-icon" onclick="window.resetWater()">🔄 重置今日</button><button class="btn-icon" onclick="window.waterHistory()">📋 歷史</button></div>`;
+        document.getElementById('healthContent').innerHTML = html;
+    };
+
+    window.addCup = function(idx) {
+        const today = new Date().toISOString().slice(0,10);
+        let water = store.health.water;
+        if (water.today.date !== today) { 
+            water.today = { date: today, cups: 0 }; 
+        }
+        if (idx < water.today.cups) return;
+        water.today.cups = Math.min(8, idx+1);
+        saveStore(store);
+        window.showWater();
+    };
+
+    window.resetWater = function() {
+        if (!confirm('確定重置今日喝水紀錄嗎？')) return;
+        const water = store.health.water;
+        water.history.push({ date: water.today.date, cups: water.today.cups });
+        water.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
+        saveStore(store);
+        window.showWater();
+    };
+
+    window.waterHistory = function() {
+        const hist = store.health.water.history || [];
+        let msg = '📋 喝水歷史\n';
+        hist.forEach(h => msg += `${h.date} : ${h.cups} 杯\n`);
+        alert(msg || '尚無歷史');
+    };
+
+    window.showExercise = function() {
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addExercise()">➕ 記錄運動</button></div>`;
+        const ex = store.health.exercises || [];
+        if (ex.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">🏋️ 還沒有運動記錄</p>`;
+        ex.forEach((e, i) => {
+            html += `<div class="record-card">🏃 ${e.date} ${e.type} ${e.duration}分 ${e.note||''} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delExercise(${i})">🗑️</button></div>`;
+        });
+        document.getElementById('healthContent').innerHTML = html;
+    };
+
+    window.addExercise = function() {
+        const token = tokenInput.value.trim();
+        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+        const date = prompt('日期') || '';
+        const type = prompt('運動類型 (跑步/游泳/跳繩/其他)') || '';
+        const duration = parseInt(prompt('分鐘數')) || 0;
+        const note = prompt('備註') || '';
+        store.health.exercises.push({ date, type, duration, note });
+        saveStore(store);
+        window.showExercise();
+    };
+
+    window.delExercise = function(idx) {
+        if (!confirm('確定刪除嗎？')) return;
+        store.health.exercises.splice(idx, 1);
+        saveStore(store);
+        window.showExercise();
+    };
+
+    function attachEvents() {
+        // 已經用 onclick 處理了
+    }
+
+    // 初始化
+    renderMain();
+    updateTokenStatus();
+
+    // 每日重置喝水
+    function checkWaterReset() {
+        const today = new Date().toISOString().slice(0,10);
+        if (store.health.water.today.date !== today) {
+            store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
+            store.health.water.today = { date: today, cups: 0 };
+            saveStore(store);
+        }
+    }
+    setInterval(checkWaterReset, 60000);
+    checkWaterReset();
+
+    window.addEventListener('beforeunload', function() {
+        const token = tokenInput.value.trim();
+        if (token) {
+            store.token = token;
+            localStorage.setItem(TOKEN_KEY, token);
+            saveStore(store);
+        }
+    });
+})();
 </script>
 </body>
 </html>
