@@ -8,388 +8,87 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23fce9f0'/%3E%3Ccircle cx='38' cy='40' r='12' fill='%23e85a6f'/%3E%3Ccircle cx='62' cy='40' r='12' fill='%23e85a6f'/%3E%3Cpath d='M30 55 Q50 75 70 55' stroke='%236a8c5a' stroke-width='6' fill='none' stroke-linecap='round' /%3E%3C/svg%3E">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body {
-            background: linear-gradient(145deg, #f0f8ff 0%, #fce9f0 100%);
-            min-height: 100vh;
-            padding: 12px;
-            display: flex;
-            justify-content: center;
-        }
-        .app {
-            max-width: 480px;
-            width: 100%;
-            background: rgba(255,248,250,0.92);
-            backdrop-filter: blur(10px);
-            border-radius: 32px;
-            padding: 16px;
-            box-shadow: 0 12px 40px rgba(130,160,200,0.15);
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .title {
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 300;
-            color: #5a7a8a;
-            margin-bottom: 10px;
-        }
-        .token-area {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-            background: white;
-            padding: 6px 12px;
-            border-radius: 60px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            align-items: center;
-        }
-        .token-area input {
-            flex: 1;
-            min-width: 100px;
-            border: none;
-            padding: 8px 4px;
-            font-size: 0.8rem;
-            font-family: monospace;
-            outline: none;
-            background: transparent;
-        }
-        .token-area .btn-use {
-            background: #8ab3d0;
-            color: white;
-            border: none;
-            padding: 5px 14px;
-            border-radius: 40px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-        }
+        body { background: linear-gradient(145deg, #f0f8ff 0%, #fce9f0 100%); min-height: 100vh; padding: 12px; display: flex; justify-content: center; }
+        .app { max-width: 480px; width: 100%; background: rgba(255,248,250,0.92); backdrop-filter: blur(10px); border-radius: 32px; padding: 16px; box-shadow: 0 12px 40px rgba(130,160,200,0.15); border: 1px solid rgba(255,255,255,0.5); }
+        .title { text-align: center; font-size: 1.8rem; font-weight: 300; color: #5a7a8a; margin-bottom: 10px; }
+        .token-area { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; background: white; padding: 6px 12px; border-radius: 60px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); align-items: center; }
+        .token-area input { flex: 1; min-width: 100px; border: none; padding: 8px 4px; font-size: 0.8rem; font-family: monospace; outline: none; background: transparent; }
+        .token-area .btn-use { background: #8ab3d0; color: white; border: none; padding: 5px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
         .token-area .btn-use:active { transform: scale(0.94); }
-        .token-status {
-            font-size: 0.6rem;
-            padding: 3px 10px;
-            border-radius: 30px;
-        }
+        .token-status { font-size: 0.6rem; padding: 3px 10px; border-radius: 30px; }
         .token-status.ok { background: #d4edda; color: #155724; }
         .token-status.no { background: #f8d7da; color: #721c24; }
 
-        .upload-area {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-        .upload-area .upload-btn {
-            background: #8ab3d0;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            white-space: nowrap;
-        }
+        .upload-area { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .upload-area .upload-btn { background: #8ab3d0; color: white; border: none; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; cursor: pointer; }
         .upload-area .upload-btn:active { transform: scale(0.94); }
         .upload-area .upload-btn input { display: none; }
-        .upload-area .photo-count {
-            font-size: 0.75rem;
-            color: #6a8a9a;
-        }
+        .upload-area .photo-count { font-size: 0.75rem; color: #6a8a9a; }
 
-        .photo-strip {
-            display: flex;
-            gap: 12px;
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #f5f9fe;
-            border-radius: 16px;
-            min-height: 180px;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed #dce8f0;
-            flex-direction: column;
-        }
-        .photo-strip .empty {
-            color: #aab8c8;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-        .photo-strip .photo-item {
-            max-width: 100%;
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #dcebf5;
-        }
-        .photo-strip .photo-item img {
-            width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            display: block;
-        }
+        .photo-strip { display: flex; gap: 12px; padding: 10px; margin-bottom: 10px; background: #f5f9fe; border-radius: 16px; min-height: 180px; align-items: center; justify-content: center; border: 2px dashed #dce8f0; flex-direction: column; }
+        .photo-strip .empty { color: #aab8c8; font-size: 0.9rem; text-align: center; }
+        .photo-strip .photo-item { max-width: 100%; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #dcebf5; }
+        .photo-strip .photo-item img { width: 100%; max-height: 300px; object-fit: contain; display: block; }
 
-        .main-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 10px;
-        }
-        .main-tabs button {
-            flex: 1;
-            padding: 10px 0;
-            border: none;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            background: #eef4f9;
-            color: #4a6a7a;
-            cursor: pointer;
-            transition: 0.15s;
-            border: 1px solid transparent;
-        }
-        .main-tabs button.active {
-            background: #8ab3d0;
-            color: white;
-            box-shadow: 0 4px 12px #8ab3d066;
-        }
+        .main-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+        .main-tabs button { flex: 1; padding: 10px 0; border: none; border-radius: 60px; font-weight: 600; font-size: 0.85rem; background: #eef4f9; color: #4a6a7a; cursor: pointer; transition: 0.15s; border: 1px solid transparent; }
+        .main-tabs button.active { background: #8ab3d0; color: white; box-shadow: 0 4px 12px #8ab3d066; }
         .main-tabs button:active { transform: scale(0.94); }
 
-        .panel {
-            background: #fafdff;
-            border-radius: 24px;
-            padding: 14px;
-            min-height: 380px;
-            border: 1px solid #e8f0f8;
-        }
+        .panel { background: #fafdff; border-radius: 24px; padding: 14px; min-height: 380px; border: 1px solid #e8f0f8; }
 
-        .sub-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        .sub-tabs button {
-            padding: 5px 14px;
-            border: none;
-            border-radius: 40px;
-            font-size: 0.78rem;
-            background: #eef4f9;
-            color: #4a6a7a;
-            cursor: pointer;
-            border: 1px solid transparent;
-        }
-        .sub-tabs button.active {
-            background: #8ab3d0;
-            color: white;
-        }
+        .sub-tabs { display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+        .sub-tabs button { padding: 5px 14px; border: none; border-radius: 40px; font-size: 0.78rem; background: #eef4f9; color: #4a6a7a; cursor: pointer; border: 1px solid transparent; }
+        .sub-tabs button.active { background: #8ab3d0; color: white; }
 
-        .btn {
-            padding: 6px 18px;
-            border: none;
-            border-radius: 60px;
-            font-weight: 500;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: 0.1s;
-            color: white;
-            background: #8ab3d0;
-            box-shadow: 0 2px 8px #8ab3d066;
-        }
+        .btn { padding: 6px 18px; border: none; border-radius: 60px; font-weight: 500; font-size: 0.8rem; cursor: pointer; color: white; background: #8ab3d0; box-shadow: 0 2px 8px #8ab3d066; }
         .btn:active { transform: scale(0.94); }
         .btn-danger { background: #d48a8a; box-shadow: 0 2px 8px #d48a8a66; }
         .btn-success { background: #6fbf8a; box-shadow: 0 2px 8px #6fbf8a66; }
         .btn-sm { padding: 3px 12px; font-size: 0.7rem; }
 
         .flex-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 4px 0; }
-        .record-card {
-            background: white;
-            border-radius: 16px;
-            padding: 8px 12px;
-            margin: 4px 0;
-            box-shadow: 0 1px 6px #d0e0ec;
-            font-size: 0.85rem;
-        }
+        .record-card { background: white; border-radius: 16px; padding: 8px 12px; margin: 4px 0; box-shadow: 0 1px 6px #d0e0ec; font-size: 0.85rem; }
         .record-card .right { float: right; margin-left: 4px; }
-        input, select, textarea {
-            background: white;
-            border: 1px solid #dce8f0;
-            border-radius: 30px;
-            padding: 8px 14px;
-            font-size: 0.85rem;
-            width: 100%;
-            outline: none;
-        }
+        input, select, textarea { background: white; border: 1px solid #dce8f0; border-radius: 30px; padding: 8px 14px; font-size: 0.85rem; width: 100%; outline: none; }
         input:focus, select:focus, textarea:focus { border-color: #8ab3d0; }
         textarea { border-radius: 16px; min-height: 50px; resize: vertical; }
 
-        .cal-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 4px 0 8px 0;
-        }
-        .cal-nav .month-label {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #4a6a7a;
-        }
-        .cal-nav button {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 4px 12px;
-            border-radius: 30px;
-            background: #eef4f9;
-        }
+        .cal-nav { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px 0; }
+        .cal-nav .month-label { font-size: 1rem; font-weight: 600; color: #4a6a7a; }
+        .cal-nav button { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px 12px; border-radius: 30px; background: #eef4f9; }
         .cal-nav button:active { transform: scale(0.9); }
 
-        .cal-grid {
-            display: grid;
-            grid-template-columns: repeat(7,1fr);
-            gap: 3px;
-            margin: 4px 0;
-        }
-        .cal-grid .wk {
-            font-weight: 600;
-            color: #5a7a8a;
-            font-size: 0.65rem;
-            text-align: center;
-            padding: 4px 0;
-        }
-        .cal-grid .day {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            background: #f4f8fc;
-            cursor: pointer;
-            border: 1px solid transparent;
-            padding: 3px 2px;
-            min-height: 44px;
-            text-align: center;
-            line-height: 1.2;
-            position: relative;
-            overflow: hidden;
-        }
-        .cal-grid .day .day-number {
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .cal-grid .day .event-text {
-            font-size: 0.45rem;
-            color: #8ab3d0;
-            line-height: 1.1;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            padding: 0 1px;
-            font-weight: 600;
-            width: 100%;
-        }
-        .cal-grid .day .event-text.more {
-            color: #b0c0d0;
-            font-size: 0.4rem;
-        }
+        .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; margin: 4px 0; }
+        .cal-grid .wk { font-weight: 600; color: #5a7a8a; font-size: 0.65rem; text-align: center; padding: 4px 0; }
+        .cal-grid .day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border-radius: 10px; font-size: 0.7rem; background: #f4f8fc; cursor: pointer; border: 1px solid transparent; padding: 3px 2px; min-height: 44px; text-align: center; line-height: 1.2; position: relative; overflow: hidden; }
+        .cal-grid .day .day-number { font-size: 0.85rem; font-weight: 600; }
+        .cal-grid .day .event-text { font-size: 0.45rem; color: #8ab3d0; line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; font-weight: 600; width: 100%; }
+        .cal-grid .day .event-text.more { color: #b0c0d0; font-size: 0.4rem; }
         .cal-grid .day.other { color: #b0c0d0; }
         .cal-grid .day.other .event-text { color: #c0d0e0; }
         .cal-grid .day:active { transform: scale(0.9); }
         .cal-grid .day.has { background: #e8f4fa; border-color: #8ab3d0; }
 
-        .grade-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 4px 0 8px 0;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .grade-nav .semester-label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #4a6a7a;
-        }
-        .grade-nav button {
-            background: none;
-            border: none;
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 2px 12px;
-            border-radius: 30px;
-            background: #eef4f9;
-        }
+        .grade-nav { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px 0; flex-wrap: wrap; gap: 4px; }
+        .grade-nav .semester-label { font-size: 0.9rem; font-weight: 600; color: #4a6a7a; }
+        .grade-nav button { background: none; border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 12px; border-radius: 30px; background: #eef4f9; }
         .grade-nav button:active { transform: scale(0.9); }
 
-        .grade-layout {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .grade-subjects {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin: 4px 0;
-        }
-        .grade-subjects button {
-            padding: 2px 12px;
-            border: 1px solid #dce8f0;
-            border-radius: 30px;
-            background: white;
-            font-size: 0.7rem;
-            cursor: pointer;
-        }
+        .grade-layout { display: flex; gap: 8px; flex-wrap: wrap; }
+        .grade-subjects { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+        .grade-subjects button { padding: 2px 12px; border: 1px solid #dce8f0; border-radius: 30px; background: white; font-size: 0.7rem; cursor: pointer; }
         .grade-subjects button.active { background: #8ab3d0; color: white; border-color: #8ab3d0; }
         .grade-records { max-height: 200px; overflow-y: auto; margin-top: 6px; }
 
-        .cups {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin: 8px 0;
-        }
-        .cup {
-            width: 36px; height: 46px;
-            background: #dce8f0;
-            border-radius: 4px 4px 14px 14px;
-            border: 2px solid #8ab3d0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            cursor: pointer;
-            user-select: none;
-        }
+        .cups { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 8px 0; }
+        .cup { width: 36px; height: 46px; background: #dce8f0; border-radius: 4px 4px 14px 14px; border: 2px solid #8ab3d0; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; user-select: none; }
         .cup.filled { background: #6d9bbb; color: white; border-color: #4f7f9a; }
 
         .diary-photo { max-width: 100%; border-radius: 12px; margin: 4px 0; max-height: 200px; }
 
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        .modal {
-            background: white;
-            border-radius: 28px;
-            padding: 24px 20px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal { background: white; border-radius: 28px; padding: 24px 20px; max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
         .modal h3 { margin-bottom: 12px; color: #4a6a7a; }
         .modal .field { margin: 6px 0; }
         .modal .field label { font-size: 0.8rem; color: #6a8a9a; display: block; margin-bottom: 2px; }
@@ -397,77 +96,24 @@
 
         .text-muted { color: #8a9aaa; font-size: 0.8rem; }
 
-        .weather-options, .mood-options {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 4px 0;
-        }
-        .weather-options button, .mood-options button {
-            padding: 4px 12px;
-            border: 2px solid #dce8f0;
-            border-radius: 30px;
-            background: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .weather-options button.selected, .mood-options button.selected {
-            border-color: #8ab3d0;
-            background: #e8f4fa;
-        }
+        .weather-options, .mood-options { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+        .weather-options button, .mood-options button { padding: 4px 12px; border: 2px solid #dce8f0; border-radius: 30px; background: white; font-size: 1.2rem; cursor: pointer; transition: 0.1s; }
+        .weather-options button.selected, .mood-options button.selected { border-color: #8ab3d0; background: #e8f4fa; }
         .weather-options button:active, .mood-options button:active { transform: scale(0.92); }
 
-        .sticker-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            pointer-events: none;
-        }
-        .sticker {
-            background: white;
-            border-radius: 60px;
-            padding: 30px 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            font-size: 2.5rem;
-            text-align: center;
-            animation: pop 0.5s ease;
-            pointer-events: auto;
-            border: 4px solid #fce9f0;
-        }
+        .sticker-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; pointer-events: none; }
+        .sticker { background: white; border-radius: 60px; padding: 30px 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); font-size: 2.5rem; text-align: center; animation: pop 0.5s ease; pointer-events: auto; border: 4px solid #fce9f0; }
         .sticker .sub { font-size: 1rem; color: #5a7a8a; margin-top: 4px; }
-        @keyframes pop {
-            0% { transform: scale(0.2); opacity: 0; }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .sync-notice {
-            font-size: 0.6rem;
-            text-align: center;
-            padding: 4px;
-            margin-top: 6px;
-            background: #f0f5fa;
-            border-radius: 30px;
-        }
-        .week-label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: #4a6a7a;
-            margin-bottom: 6px;
-        }
-        .debug-info {
-            font-size: 0.6rem;
-            color: #8a9aaa;
-            padding: 4px;
-            text-align: center;
-            background: #f8fafc;
-            border-radius: 20px;
-            margin-top: 4px;
-            word-break: break-all;
-        }
+        @keyframes pop { 0% { transform: scale(0.2); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+
+        .sync-area { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .sync-area .btn { font-size: 0.7rem; padding: 4px 14px; }
+        .sync-area .btn-success { background: #6fbf8a; }
+        .sync-area .btn-danger { background: #d48a8a; }
+
+        .sync-notice { font-size: 0.6rem; color: #8a9aaa; text-align: center; padding: 4px; margin-top: 6px; background: #f0f5fa; border-radius: 30px; }
+        .week-label { font-size: 0.8rem; font-weight: 600; color: #4a6a7a; margin-bottom: 6px; }
+        .debug-info { font-size: 0.6rem; color: #8a9aaa; padding: 4px; text-align: center; background: #f8fafc; border-radius: 20px; margin-top: 4px; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -500,16 +146,19 @@
 
     <div class="panel" id="panel"></div>
 
-    <div class="sync-notice" id="syncNotice">☁️ 自動同步已開啟</div>
+    <div class="sync-area">
+        <button class="btn btn-success" id="syncUpBtn">☁️ 上傳備份</button>
+        <button class="btn btn-danger" id="syncDownBtn">☁️ 下載還原</button>
+    </div>
+    <div class="sync-notice" id="syncNotice">💾 點「上傳備份」存到 GitHub，換手機按「下載還原」</div>
     <div class="debug-info" id="debugInfo"></div>
 </div>
 
 <script>
 (function() {
-    // ========== 儲存 ==========
-    const STORE_KEY = 'cherry_data_final';
-    const TOKEN_KEY = 'cherry_token_final';
-    const GIST_ID_KEY = 'cherry_gist_id_final';
+    const STORE_KEY = 'cherry_data_local';
+    const TOKEN_KEY = 'cherry_token_local';
+    const GIST_ID_KEY = 'cherry_gist_id_manual';
 
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
@@ -519,11 +168,8 @@
         catch(e) { return false; }
     }
     function loadLocal() {
-        try {
-            const raw = localStorage.getItem(STORE_KEY);
-            if (!raw) return null;
-            return JSON.parse(decode(raw));
-        } catch(e) { return null; }
+        try { const raw = localStorage.getItem(STORE_KEY); if (!raw) return null; return JSON.parse(decode(raw)); }
+        catch(e) { return null; }
     }
 
     function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
@@ -533,14 +179,7 @@
     const MOOD_EMOJIS = { '😊': '開心', '😐': '普通', '😢': '難過', '🤩': '興奮', '😌': '平靜' };
     const STATUS_ORDER = { '過度肥胖':0, '輕度肥胖':1, '正常':2, '輕度瘦弱':3, '過度瘦弱':4 };
 
-    function generateSemesters() {
-        const sems = [];
-        for (let y = 2026; y <= 2035; y++) {
-            sems.push(`${y}/${y+1} 第一段`);
-            sems.push(`${y}/${y+1} 第二段`);
-        }
-        return sems;
-    }
+    function generateSemesters() { const sems = []; for (let y = 2026; y <= 2035; y++) { sems.push(`${y}/${y+1} 第一段`); sems.push(`${y}/${y+1} 第二段`); } return sems; }
     const ALL_SEMESTERS = generateSemesters();
 
     let store = {
@@ -552,9 +191,7 @@
     };
 
     const saved = loadLocal();
-    if (saved) {
-        store = saved;
-    }
+    if (saved) { store = saved; }
 
     if (!store.study.grades) store.study.grades = {};
     if (!store.study.calendar) store.study.calendar = [];
@@ -564,9 +201,7 @@
     if (!store.health.water) store.health.water = { today: { date: '', cups: 0 }, history: [] };
     if (!store.health.exercise) store.health.exercise = [];
 
-    ALL_SEMESTERS.forEach(s => {
-        if (!store.study.grades[s]) store.study.grades[s] = {};
-    });
+    ALL_SEMESTERS.forEach(s => { if (!store.study.grades[s]) store.study.grades[s] = {}; });
 
     const tokenInput = document.getElementById('tokenInput');
     const tokenStatus = document.getElementById('tokenStatus');
@@ -577,12 +212,8 @@
     const debugInfo = document.getElementById('debugInfo');
     tokenInput.value = store.token || '';
 
-    function setDebug(msg) {
-        debugInfo.textContent = msg;
-        console.log('[Debug]', msg);
-    }
+    function setDebug(msg) { debugInfo.textContent = msg; console.log('[Debug]', msg); }
 
-    // ========== Token ==========
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
         if (!t) { alert('請輸入 Token'); return; }
@@ -593,7 +224,6 @@
         updateTokenStatus();
         alert('✅ Token 已設定！');
         renderMain();
-        setTimeout(() => { autoSync(); }, 3000);
     });
 
     function updateTokenStatus() {
@@ -604,21 +234,13 @@
     }
     updateTokenStatus();
 
-    // ========== 同步（repo token 可用於 Gist） ==========
-    let isSyncing = false;
-
-    async function autoSync() {
+    // ========== 手動上傳 ==========
+    async function uploadToGist() {
         const token = tokenInput.value.trim();
-        if (!validToken(token)) {
-            setDebug('Token 無效');
-            return;
-        }
+        if (!validToken(token)) { alert('請先設定 Token'); return; }
 
-        if (isSyncing) return;
-        isSyncing = true;
-        syncNotice.textContent = '☁️ 同步中...';
-        syncNotice.style.color = '#856404';
-        setDebug('開始同步...');
+        setDebug('上傳中...');
+        syncNotice.textContent = '☁️ 上傳中...';
 
         try {
             const syncData = JSON.parse(JSON.stringify(store));
@@ -653,7 +275,7 @@
 
             if (!response.ok) {
                 const err = await response.json();
-                throw new Error(err.message || '同步失敗');
+                throw new Error(err.message || '上傳失敗');
             }
 
             const result = await response.json();
@@ -661,27 +283,32 @@
                 localStorage.setItem(GIST_ID_KEY, result.id);
             }
 
-            syncNotice.textContent = '☁️ 已同步 ✓';
-            syncNotice.style.color = '#155724';
-            setDebug('✅ 同步成功！');
+            syncNotice.textContent = '✅ 上傳成功！';
+            setDebug('✅ 上傳成功！');
+            alert('✅ 備份已上傳到 GitHub！');
 
         } catch(e) {
-            syncNotice.textContent = '☁️ 同步失敗';
-            syncNotice.style.color = '#721c24';
+            syncNotice.textContent = '❌ 上傳失敗';
             setDebug('❌ ' + e.message);
+            alert('❌ 上傳失敗：' + e.message);
         }
-        isSyncing = false;
     }
 
-    async function loadFromGist() {
+    // ========== 手動下載 ==========
+    async function downloadFromGist() {
         const token = tokenInput.value.trim();
-        if (!validToken(token)) return;
+        if (!validToken(token)) { alert('請先設定 Token'); return; }
 
         const gistId = localStorage.getItem(GIST_ID_KEY);
         if (!gistId) {
-            setTimeout(() => { autoSync(); }, 5000);
+            alert('還沒有上傳過備份，請先按「上傳備份」');
             return;
         }
+
+        if (!confirm('下載會覆蓋目前資料，確定繼續？')) return;
+
+        setDebug('下載中...');
+        syncNotice.textContent = '☁️ 下載中...';
 
         try {
             const response = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -694,13 +321,14 @@
             if (!response.ok) {
                 if (response.status === 404) {
                     localStorage.removeItem(GIST_ID_KEY);
+                    throw new Error('備份不存在，請先上傳');
                 }
-                return;
+                throw new Error('下載失敗');
             }
 
             const result = await response.json();
             const content = result.files['data.json']?.content;
-            if (!content) return;
+            if (!content) throw new Error('資料格式錯誤');
 
             const remoteData = JSON.parse(content);
             const localPhotos = store.photos || [];
@@ -709,9 +337,7 @@
             store.photos = localPhotos;
 
             if (!store.study.grades) store.study.grades = {};
-            ALL_SEMESTERS.forEach(s => {
-                if (!store.study.grades[s]) store.study.grades[s] = {};
-            });
+            ALL_SEMESTERS.forEach(s => { if (!store.study.grades[s]) store.study.grades[s] = {}; });
             if (!store.study.calendar) store.study.calendar = [];
             if (!store.study.todos) store.study.todos = [];
             if (!store.diary.entries) store.diary.entries = [];
@@ -722,22 +348,19 @@
             saveLocal();
             renderPhotoStrip();
             renderMain();
-            syncNotice.textContent = '☁️ 已從雲端載入 ✓';
-            syncNotice.style.color = '#155724';
-            setDebug('✅ 載入成功！');
+            syncNotice.textContent = '✅ 下載成功！';
+            setDebug('✅ 下載成功！');
+            alert('✅ 資料已還原！');
 
         } catch(e) {
-            setDebug('❌ 載入失敗: ' + e.message);
+            syncNotice.textContent = '❌ 下載失敗';
+            setDebug('❌ ' + e.message);
+            alert('❌ 下載失敗：' + e.message);
         }
     }
 
-    function saveAndSync() {
-        saveLocal();
-        if (window._syncTimer) clearTimeout(window._syncTimer);
-        window._syncTimer = setTimeout(() => {
-            autoSync();
-        }, 3000);
-    }
+    document.getElementById('syncUpBtn').addEventListener('click', uploadToGist);
+    document.getElementById('syncDownBtn').addEventListener('click', downloadFromGist);
 
     // ========== 照片 ==========
     function renderPhotoStrip() {
@@ -749,9 +372,7 @@
             return;
         }
         const lastPhoto = photos[photos.length - 1];
-        photoStrip.innerHTML = `<div class="photo-item">
-            <img src="${lastPhoto.data}" onclick="window._viewPhoto('${lastPhoto.data}')">
-        </div>`;
+        photoStrip.innerHTML = `<div class="photo-item"><img src="${lastPhoto.data}" onclick="window._viewPhoto('${lastPhoto.data}')"></div>`;
         updateUploadBtn();
     }
 
@@ -771,7 +392,7 @@
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
-                    saveAndSync();
+                    saveLocal();
                     renderPhotoStrip();
                     renderMain();
                 };
@@ -791,10 +412,7 @@
     function showSticker(emoji, text) {
         const overlay = document.createElement('div');
         overlay.className = 'sticker-overlay';
-        overlay.innerHTML = `<div class="sticker" onclick="this.parentElement.remove()">
-            ${emoji}
-            <div class="sub">${text}</div>
-        </div>`;
+        overlay.innerHTML = `<div class="sticker" onclick="this.parentElement.remove()">${emoji}<div class="sub">${text}</div></div>`;
         document.body.appendChild(overlay);
         setTimeout(() => { if (overlay.parentElement) overlay.remove(); }, 2500);
     }
@@ -818,18 +436,8 @@
 
     function switchSub(sub) { currentSub = sub; renderMain(); }
     function switchSubject(s) { currentSubject = s; renderMain(); }
-    function changeMonth(delta) {
-        calMonth += delta;
-        if (calMonth > 11) { calMonth = 0; calYear++; }
-        if (calMonth < 0) { calMonth = 11; calYear--; }
-        renderMain();
-    }
-    function changeSemester(delta) {
-        currentSemesterIdx += delta;
-        if (currentSemesterIdx < 0) currentSemesterIdx = 0;
-        if (currentSemesterIdx >= ALL_SEMESTERS.length) currentSemesterIdx = ALL_SEMESTERS.length - 1;
-        renderMain();
-    }
+    function changeMonth(delta) { calMonth += delta; if (calMonth > 11) { calMonth = 0; calYear++; } if (calMonth < 0) { calMonth = 11; calYear--; } renderMain(); }
+    function changeSemester(delta) { currentSemesterIdx += delta; if (currentSemesterIdx < 0) currentSemesterIdx = 0; if (currentSemesterIdx >= ALL_SEMESTERS.length) currentSemesterIdx = ALL_SEMESTERS.length - 1; renderMain(); }
 
     // ========== 彈窗 ==========
     function showModal(title, fields, onSubmit) {
@@ -839,15 +447,11 @@
         fields.forEach(f => {
             if (f.type === 'weather') {
                 html += `<div class="field"><label>${f.label}</label><div class="weather-options" id="modal_${f.key}">`;
-                Object.keys(WEATHER_EMOJIS).forEach(e => {
-                    html += `<button data-value="${e}" class="${e===f.value?'selected':''}">${e}</button>`;
-                });
+                Object.keys(WEATHER_EMOJIS).forEach(e => { html += `<button data-value="${e}" class="${e===f.value?'selected':''}">${e}</button>`; });
                 html += `</div></div>`;
             } else if (f.type === 'mood') {
                 html += `<div class="field"><label>${f.label}</label><div class="mood-options" id="modal_${f.key}">`;
-                Object.keys(MOOD_EMOJIS).forEach(e => {
-                    html += `<button data-value="${e}" class="${e===f.value?'selected':''}">${e}</button>`;
-                });
+                Object.keys(MOOD_EMOJIS).forEach(e => { html += `<button data-value="${e}" class="${e===f.value?'selected':''}">${e}</button>`; });
                 html += `</div></div>`;
             } else if (f.type === 'textarea') {
                 html += `<div class="field"><label>${f.label}</label><textarea id="modal_${f.key}" placeholder="${f.placeholder||''}">${f.value||''}</textarea></div>`;
@@ -857,10 +461,7 @@
                 html += `<div class="field"><label>${f.label}</label><input type="${f.type||'text'}" id="modal_${f.key}" placeholder="${f.placeholder||''}" value="${f.value||''}"></div>`;
             }
         });
-        html += `<div class="btn-row">
-            <button class="btn btn-danger" onclick="this.closest('.modal-overlay').remove()">取消</button>
-            <button class="btn" id="modalSubmit">確認</button>
-        </div></div>`;
+        html += `<div class="btn-row"><button class="btn btn-danger" onclick="this.closest('.modal-overlay').remove()">取消</button><button class="btn" id="modalSubmit">確認</button></div></div>`;
         overlay.innerHTML = html;
         document.body.appendChild(overlay);
 
@@ -987,12 +588,8 @@
             { key: 'content', label: '內容', type: 'text', placeholder: '輸入行程內容' }
         ], function(result) {
             if (!result.date || !result.content) { alert('請填寫日期和內容'); return; }
-            store.study.calendar.push({
-                date: result.date,
-                subject: result.subject || '',
-                content: result.content
-            });
-            saveAndSync();
+            store.study.calendar.push({ date: result.date, subject: result.subject || '', content: result.content });
+            saveLocal();
             renderMain();
         });
     };
@@ -1001,17 +598,14 @@
         const events = store.study.calendar.filter(e => e.date === date);
         if (!events.length) { alert('這天沒有行程'); return; }
         let msg = `📅 ${date} 行程：\n`;
-        events.forEach((e, i) => {
-            const subject = e.subject ? `[${e.subject}] ` : '';
-            msg += `${i+1}. ${subject}${e.content}\n`;
-        });
+        events.forEach((e, i) => { const subject = e.subject ? `[${e.subject}] ` : ''; msg += `${i+1}. ${subject}${e.content}\n`; });
         alert(msg);
     };
 
     window._delEvent = function(date, content, subject) {
         if (!confirm('刪除這個行程？')) return;
         const idx = store.study.calendar.findIndex(e => e.date === date && e.content === content && (e.subject||'') === (subject||''));
-        if (idx > -1) { store.study.calendar.splice(idx,1); saveAndSync(); renderMain(); }
+        if (idx > -1) { store.study.calendar.splice(idx,1); saveLocal(); renderMain(); }
     };
 
     // ----- 備忘錄 -----
@@ -1027,12 +621,10 @@
 
     window._addTodo = function() {
         if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
-        showModal('新增待辦', [
-            { key: 'text', label: '待辦事項', type: 'text', placeholder: '輸入事項' }
-        ], function(result) {
+        showModal('新增待辦', [{ key: 'text', label: '待辦事項', type: 'text', placeholder: '輸入事項' }], function(result) {
             if (!result.text) { alert('請輸入內容'); return; }
             store.study.todos.push({ id: Date.now(), text: result.text, done: false });
-            saveAndSync();
+            saveLocal();
             renderMain();
         });
     };
@@ -1040,7 +632,7 @@
     window._toggleTodo = function(i) {
         store.study.todos[i].done = !store.study.todos[i].done;
         if (store.study.todos[i].done) store.study.todos.splice(i, 1);
-        saveAndSync();
+        saveLocal();
         renderMain();
     };
 
@@ -1101,7 +693,7 @@
             const records = store.study.grades[sem][sub];
             const prev = records.length > 0 ? records[records.length-1].score : null;
             records.push({ date: result.date, score, note: result.note || '' });
-            saveAndSync();
+            saveLocal();
             renderMain();
             if (prev !== null) {
                 if (score > prev) showSticker('🎉', '進步了！繼續加油！');
@@ -1118,7 +710,7 @@
         if (store.study.grades[sem]?.[sub]) {
             store.study.grades[sem][sub].splice(idx, 1);
             if (!store.study.grades[sem][sub].length) delete store.study.grades[sem][sub];
-            saveAndSync();
+            saveLocal();
             renderMain();
         }
     };
@@ -1131,10 +723,7 @@
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0,10);
 
-        const recentEntries = entries
-            .filter(e => e.date >= sevenDaysAgoStr)
-            .sort((a, b) => b.date.localeCompare(a.date))
-            .slice(0, 7);
+        const recentEntries = entries.filter(e => e.date >= sevenDaysAgoStr).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
 
         let html = `
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -1180,7 +769,7 @@
                 content: result.content,
                 image: lastPhoto
             });
-            saveAndSync();
+            saveLocal();
             renderMain();
         });
     };
@@ -1200,7 +789,7 @@
             entry.weather = result.weather || entry.weather;
             entry.mood = result.mood || entry.mood;
             entry.content = result.content || entry.content;
-            saveAndSync();
+            saveLocal();
             renderMain();
         });
     };
@@ -1210,7 +799,7 @@
         const pwd = prompt('🔒 請輸入密碼');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         const idx = store.diary.entries.findIndex(e => e.id === id);
-        if (idx > -1) { store.diary.entries.splice(idx, 1); saveAndSync(); renderMain(); }
+        if (idx > -1) { store.diary.entries.splice(idx, 1); saveLocal(); renderMain(); }
     };
 
     window._searchDiary = function() {
@@ -1218,9 +807,7 @@
         if (!date) { alert('請選擇日期'); return; }
         const found = store.diary.entries.filter(e => e.date === date);
         if (!found.length) alert('沒有找到當天日記');
-        else {
-            alert(found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n'));
-        }
+        else { alert(found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n')); }
     };
 
     // ========== 健康 ==========
@@ -1275,7 +862,7 @@
             const records = store.health.bmi;
             const prev = records.length > 0 ? records[records.length-1].status : null;
             records.push({ date: result.date, height: h, weight: w, bmi: bmi.toFixed(1), status });
-            saveAndSync();
+            saveLocal();
             window._showBMI();
             if (prev) {
                 const prevVal = STATUS_ORDER[prev] || 2;
@@ -1294,18 +881,16 @@
         const pwd = prompt('🔒 請輸入密碼');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         store.health.bmi.splice(i,1);
-        saveAndSync();
+        saveLocal();
         window._showBMI();
     };
 
     window._showWater = function() {
         const today = new Date().toISOString().slice(0,10);
         const w = store.health.water;
-        if (w.today.date !== today) { w.today = { date: today, cups: 0 }; saveAndSync(); }
+        if (w.today.date !== today) { w.today = { date: today, cups: 0 }; saveLocal(); }
         let html = `<div class="cups">`;
-        for (let i=0; i<8; i++) {
-            html += `<div class="cup ${i<w.today.cups?'filled':''}" onclick="window._addCup(${i})">${i<w.today.cups?'💧':'🥤'}</div>`;
-        }
+        for (let i=0; i<8; i++) { html += `<div class="cup ${i<w.today.cups?'filled':''}" onclick="window._addCup(${i})">${i<w.today.cups?'💧':'🥤'}</div>`; }
         html += `</div><div>今日已喝 ${w.today.cups} / 8 杯</div>`;
         html += `<div class="flex-row"><button class="btn btn-sm" onclick="window._resetWater()">🔄 重置</button><button class="btn btn-sm" onclick="window._waterHistory()">📋 歷史</button></div>`;
         document.getElementById('healthContent').innerHTML = html;
@@ -1314,7 +899,7 @@
         const w = store.health.water;
         if (idx < w.today.cups) return;
         w.today.cups = Math.min(8, idx+1);
-        saveAndSync();
+        saveLocal();
         window._showWater();
     };
     window._resetWater = function() {
@@ -1322,7 +907,7 @@
         const w = store.health.water;
         w.history.push({ date: w.today.date, cups: w.today.cups });
         w.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
-        saveAndSync();
+        saveLocal();
         window._showWater();
     };
     window._waterHistory = function() {
@@ -1352,27 +937,19 @@
         ], function(result) {
             if (!result.type || !result.duration) { alert('請填寫完整'); return; }
             store.health.exercise.push({ date: result.date, type: result.type, duration: parseInt(result.duration)||0, note: result.note||'' });
-            saveAndSync();
+            saveLocal();
             window._showExercise();
         });
     };
     window._delExercise = function(i) {
         if (!confirm('刪除這筆紀錄？')) return;
         store.health.exercise.splice(i,1);
-        saveAndSync();
+        saveLocal();
         window._showExercise();
     };
 
     // ========== 初始化 ==========
-    loadFromGist().then(() => {
-        renderMain();
-        // 每 10 分鐘自動同步一次
-        setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                autoSync();
-            }
-        }, 600000);
-    });
+    renderMain();
 
     // 每日喝水重置
     setInterval(() => {
@@ -1380,7 +957,7 @@
         if (store.health.water.today.date !== today) {
             store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
             store.health.water.today = { date: today, cups: 0 };
-            saveAndSync();
+            saveLocal();
         }
     }, 60000);
 
@@ -1390,7 +967,6 @@
     });
 
     // 暴露函數
-    window._manualSync = autoSync;
     window._switchSub = switchSub;
     window._switchSubject = switchSubject;
     window._changeMonth = changeMonth;
