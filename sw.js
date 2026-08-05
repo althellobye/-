@@ -1,4 +1,4 @@
-const CACHE = 'cherry-final';
+const CACHE = 'cherry-noapi';
 const FILES = ['/-/', '/-/index.html', '/-/manifest.json'];
 
 self.addEventListener('install', e => {
