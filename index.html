@@ -459,6 +459,7 @@
         .sync-notice .status-fail { color: #721c24; }
         .sync-notice .status-sync { color: #856404; }
         .sync-notice .status-idle { color: #8a9aaa; }
+        .sync-notice .status-wait { color: #856404; }
 
         .week-label {
             font-size: 0.8rem;
@@ -516,10 +517,11 @@
 
 <script>
 (function() {
-    const STORE_KEY = 'cherry_data_v11';
-    const TOKEN_KEY = 'cherry_token_v11';
-    const GIST_ID_KEY = 'cherry_gist_id_v11';
+    const STORE_KEY = 'cherry_data_v12';
+    const TOKEN_KEY = 'cherry_token_v12';
+    const GIST_ID_KEY = 'cherry_gist_id_v12';
 
+    // ========== 工具函數 ==========
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
 
@@ -537,6 +539,7 @@
 
     function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
 
+    // ========== 固定資料 ==========
     const SUBJECTS = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
     const WEATHER_EMOJIS = { '☀️': '晴', '⛅': '多雲', '☁️': '陰', '🌧️': '雨', '❄️': '雪' };
     const MOOD_EMOJIS = { '😊': '開心', '😐': '普通', '😢': '難過', '🤩': '興奮', '😌': '平靜' };
@@ -552,6 +555,7 @@
     }
     const ALL_SEMESTERS = generateSemesters();
 
+    // ========== Store ==========
     let store = {
         token: localStorage.getItem(TOKEN_KEY) || '',
         photos: [],
@@ -577,6 +581,7 @@
         if (!store.study.grades[s]) store.study.grades[s] = {};
     });
 
+    // ========== DOM ==========
     const tokenInput = document.getElementById('tokenInput');
     const tokenStatus = document.getElementById('tokenStatus');
     const photoStrip = document.getElementById('photoStrip');
@@ -601,7 +606,7 @@
         }
     }
 
-    // ===== Token =====
+    // ========== Token ==========
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
         if (!t) { alert('請輸入 Token'); return; }
@@ -612,7 +617,8 @@
         updateTokenStatus();
         alert('✅ Token 已設定！');
         renderMain();
-        setTimeout(() => { manualSync(); }, 1500);
+        // 延遲 3 秒後同步，避免剛設定完就大量請求
+        setTimeout(() => { manualSync(); }, 3000);
     });
 
     function updateTokenStatus() {
@@ -623,8 +629,13 @@
     }
     updateTokenStatus();
 
-    // ===== 同步核心（完整診斷） =====
+    // ========== 同步核心（優化版：冷卻 + 延遲 + 重試） ==========
     let isSyncing = false;
+    let lastSyncTime = 0;
+    const SYNC_COOLDOWN = 30000; // 30 秒冷卻
+    const SYNC_DELAY = 10000;    // 10 秒延遲
+    let syncTimer = null;
+    let retryTimer = null;
 
     async function manualSync() {
         const token = tokenInput.value.trim();
@@ -632,32 +643,42 @@
             setSyncStatus('⚠️ 請先設定 Token', 'status-fail');
             return;
         }
+        // 檢查冷卻
+        const now = Date.now();
+        if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
+            const wait = Math.ceil((SYNC_COOLDOWN - (now - lastSyncTime)) / 1000);
+            setSyncStatus(`⏳ 冷卻中，${wait}秒後可同步`, 'status-wait');
+            return;
+        }
         await doSync(token);
     }
 
     syncNotice.addEventListener('click', manualSync);
 
-    async function doSync(token) {
-        if (isSyncing) return;
+    async function doSync(token, isRetry = false) {
+        if (isSyncing) {
+            setDebug('同步進行中，跳過');
+            return;
+        }
         isSyncing = true;
         setSyncStatus('☁️ 同步中...', 'status-sync');
         setDebug('開始同步...');
 
         try {
-            // 測試 Token 是否有效
+            // 1. 測試 Token
             setDebug('測試 Token 有效性...');
             const testRes = await fetch('https://api.github.com/user', {
                 headers: { 'Authorization': `token ${token}` }
             });
             if (!testRes.ok) {
                 let msg = 'Token 無效';
-                if (testRes.status === 401) msg = 'Token 無效或已過期';
-                else if (testRes.status === 403) msg = 'Token 權限不足';
-                throw new Error(msg + ` (${testRes.status})`);
+                if (testRes.status === 401) msg = 'Token 無效或已過期 (401)';
+                else if (testRes.status === 403) msg = 'Token 權限不足 (403)';
+                throw new Error(msg);
             }
             setDebug('Token 有效 ✓');
 
-            // 準備資料（排除照片）
+            // 2. 準備資料
             const syncData = JSON.parse(JSON.stringify(store));
             syncData.photos = [];
             const dataStr = JSON.stringify(syncData);
@@ -665,6 +686,7 @@
             let gistId = localStorage.getItem(GIST_ID_KEY);
             setDebug('Gist ID: ' + (gistId || '無'));
 
+            // 3. 檢查或建立 Gist
             let existingGist = null;
             if (gistId) {
                 setDebug('檢查現有 Gist...');
@@ -676,7 +698,7 @@
                         existingGist = await checkRes.json();
                         setDebug('找到現有 Gist ✓');
                     } else if (checkRes.status === 404) {
-                        setDebug('Gist 不存在，將重新建立');
+                        setDebug('Gist 不存在，重新建立');
                         localStorage.removeItem(GIST_ID_KEY);
                         gistId = null;
                     } else {
@@ -692,9 +714,7 @@
             let body = {
                 description: 'Cherry App Data',
                 public: false,
-                files: {
-                    'data.json': { content: dataStr }
-                }
+                files: { 'data.json': { content: dataStr } }
             };
 
             if (existingGist) {
@@ -706,6 +726,7 @@
                 setDebug('建立新 Gist...');
             }
 
+            // 4. 發送請求
             const response = await fetch(url, {
                 method: method,
                 headers: {
@@ -722,11 +743,11 @@
                 let errText = await response.text();
                 setDebug('錯誤回應: ' + errText);
                 let msg = '同步失敗';
-                if (response.status === 401) msg = 'Token 無效，請重新輸入';
-                else if (response.status === 403) msg = 'Token 權限不足，需要 gist 權限';
-                else if (response.status === 404) msg = 'Gist 不存在';
-                else if (response.status === 422) msg = '資料格式錯誤';
-                else if (response.status === 409) msg = 'Gist 衝突，請稍後再試';
+                if (response.status === 401) msg = 'Token 無效或已過期 (401)';
+                else if (response.status === 403) msg = 'Token 權限不足 (403)';
+                else if (response.status === 404) msg = 'Gist 不存在 (404)';
+                else if (response.status === 422) msg = '資料格式錯誤 (422)';
+                else if (response.status === 409) msg = 'Gist 衝突，稍後重試 (409)';
                 throw new Error(msg + ` (${response.status})`);
             }
 
@@ -736,17 +757,32 @@
                 setDebug('Gist 已建立，ID: ' + result.id);
             }
 
+            lastSyncTime = Date.now();
             setSyncStatus('☁️ 已同步 ✓', 'status-ok');
             setDebug('✅ 同步成功！');
 
         } catch(e) {
-            setSyncStatus('☁️ ' + e.message, 'status-fail');
-            setDebug('❌ 錯誤: ' + e.message);
-            console.error('同步錯誤:', e);
+            const msg = e.message || '同步失敗';
+            setSyncStatus('☁️ ' + msg, 'status-fail');
+            setDebug('❌ 錯誤: ' + msg);
+
+            // 如果是 401 或 403，不重試（Token 問題）
+            if (msg.includes('401') || msg.includes('403')) {
+                setDebug('❌ Token 問題，請重新生成 Token');
+            } else if (!isRetry) {
+                // 其他錯誤，60 秒後重試一次
+                setDebug('⏳ 60 秒後重試...');
+                if (retryTimer) clearTimeout(retryTimer);
+                retryTimer = setTimeout(() => {
+                    setDebug('🔄 重試同步...');
+                    doSync(token, true);
+                }, 60000);
+            }
         }
         isSyncing = false;
     }
 
+    // ========== 載入雲端資料 ==========
     async function loadFromGist() {
         const token = tokenInput.value.trim();
         if (!validToken(token)) {
@@ -757,7 +793,7 @@
         const gistId = localStorage.getItem(GIST_ID_KEY);
         if (!gistId) {
             setDebug('沒有 Gist ID，首次使用將自動建立');
-            setTimeout(() => { manualSync(); }, 3000);
+            setTimeout(() => { manualSync(); }, 5000);
             return;
         }
 
@@ -776,7 +812,6 @@
                 if (response.status === 404) {
                     setDebug('Gist 不存在，移除 ID');
                     localStorage.removeItem(GIST_ID_KEY);
-                    setTimeout(() => { manualSync(); }, 3000);
                 }
                 return;
             }
@@ -814,22 +849,33 @@
         } catch(e) {
             setSyncStatus('☁️ 載入失敗，使用本地', 'status-fail');
             setDebug('❌ 載入錯誤: ' + e.message);
-            console.error('載入錯誤:', e);
         }
     }
 
+    // ========== 儲存 + 延遲同步 ==========
     function saveAndSync() {
         saveLocal();
-        if (window._syncTimer) clearTimeout(window._syncTimer);
-        window._syncTimer = setTimeout(() => {
+        if (syncTimer) clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => {
             const token = tokenInput.value.trim();
             if (validToken(token)) {
+                // 檢查冷卻
+                const now = Date.now();
+                if (now - lastSyncTime < SYNC_COOLDOWN && lastSyncTime > 0) {
+                    setDebug('⏳ 冷卻中，延後同步');
+                    // 冷卻期間，等冷卻結束再同步
+                    const waitTime = SYNC_COOLDOWN - (now - lastSyncTime) + 5000;
+                    syncTimer = setTimeout(() => {
+                        doSync(token);
+                    }, waitTime);
+                    return;
+                }
                 doSync(token);
             }
-        }, 5000);
+        }, SYNC_DELAY);
     }
 
-    // ===== 照片 =====
+    // ========== 照片 ==========
     function renderPhotoStrip() {
         const photos = store.photos || [];
         photoCount.textContent = `${photos.length} 張照片`;
@@ -877,7 +923,7 @@
     };
     renderPhotoStrip();
 
-    // ===== 貼紙 =====
+    // ========== 貼紙 ==========
     function showSticker(emoji, text) {
         const overlay = document.createElement('div');
         overlay.className = 'sticker-overlay';
@@ -889,7 +935,7 @@
         setTimeout(() => { if (overlay.parentElement) overlay.remove(); }, 2500);
     }
 
-    // ===== 選單 =====
+    // ========== 選單 ==========
     let currentTab = 'study';
     let currentSub = 'calendar';
     let currentSemesterIdx = 0;
@@ -921,7 +967,7 @@
         renderMain();
     }
 
-    // ===== 彈窗 =====
+    // ========== 彈窗 ==========
     function showModal(title, fields, onSubmit) {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -981,7 +1027,7 @@
         overlay.addEventListener('click', function(e) { if (e.target === this) this.remove(); });
     }
 
-    // ===== 渲染 =====
+    // ========== 渲染 ==========
     function renderMain() {
         if (currentTab === 'study') panel.innerHTML = renderStudy();
         else if (currentTab === 'diary') panel.innerHTML = renderDiary();
@@ -989,7 +1035,7 @@
         updateTokenStatus();
     }
 
-    // ===== 學習 =====
+    // ========== 學習 ==========
     function renderStudy() {
         return `
             <div class="sub-tabs">
@@ -1213,7 +1259,7 @@
         }
     };
 
-    // ===== 日記 =====
+    // ========== 日記 ==========
     function renderDiary() {
         const entries = store.diary.entries || [];
         const today = new Date();
@@ -1313,7 +1359,7 @@
         }
     };
 
-    // ===== 健康 =====
+    // ========== 健康 ==========
     function renderHealth() {
         let html = `
             <div class="flex-row">
@@ -1453,20 +1499,24 @@
         window._showExercise();
     };
 
-    // ===== 初始化 =====
+    // ========== 初始化 ==========
     loadFromGist().then(() => {
         renderMain();
-        // 每60秒自動同步一次
+        // 每 5 分鐘檢查一次同步（但會經過冷卻檢查）
         setInterval(() => {
             if (document.visibilityState === 'visible') {
                 const token = tokenInput.value.trim();
                 if (validToken(token)) {
-                    doSync(token);
+                    const now = Date.now();
+                    if (now - lastSyncTime > SYNC_COOLDOWN) {
+                        doSync(token);
+                    }
                 }
             }
-        }, 60000);
+        }, 300000); // 5 分鐘
     });
 
+    // 每日喝水重置
     setInterval(() => {
         const today = new Date().toISOString().slice(0,10);
         if (store.health.water.today.date !== today) {
@@ -1482,6 +1532,33 @@
     });
 
     window._manualSync = manualSync;
+    window._switchSub = switchSub;
+    window._switchSubject = switchSubject;
+    window._changeMonth = changeMonth;
+    window._changeSemester = changeSemester;
+    window._addEvent = window._addEvent;
+    window._showDay = window._showDay;
+    window._delEvent = window._delEvent;
+    window._addTodo = window._addTodo;
+    window._toggleTodo = window._toggleTodo;
+    window._addGrade = window._addGrade;
+    window._delGrade = window._delGrade;
+    window._addDiary = window._addDiary;
+    window._editDiary = window._editDiary;
+    window._delDiary = window._delDiary;
+    window._searchDiary = window._searchDiary;
+    window._showBMI = window._showBMI;
+    window._addBMI = window._addBMI;
+    window._delBMI = window._delBMI;
+    window._showWater = window._showWater;
+    window._addCup = window._addCup;
+    window._resetWater = window._resetWater;
+    window._waterHistory = window._waterHistory;
+    window._showExercise = window._showExercise;
+    window._addExercise = window._addExercise;
+    window._delExercise = window._delExercise;
+    window._viewPhoto = window._viewPhoto;
+
 })();
 </script>
 </body>
