@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%23fce9f0'/%3E%3Ccircle cx='38' cy='40' r='12' fill='%23e85a6f'/%3E%3Ccircle cx='62' cy='40' r='12' fill='%23e85a6f'/%3E%3Cpath d='M30 55 Q50 75 70 55' stroke='%236a8c5a' stroke-width='6' fill='none' stroke-linecap='round' /%3E%3C/svg%3E">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         body {
             background: linear-gradient(145deg, #f0f8ff 0%, #fce9f0 100%);
             min-height: 100vh;
@@ -17,165 +17,252 @@
             align-items: center;
         }
         .app-wrapper {
-            max-width: 700px;
+            max-width: 750px;
             width: 100%;
-            background: rgba(255, 248, 250, 0.75);
-            backdrop-filter: blur(6px);
-            border-radius: 48px 48px 32px 32px;
+            background: rgba(255, 248, 250, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
             padding: 20px 16px 28px;
-            box-shadow: 0 16px 40px rgba(130, 160, 200, 0.15);
+            box-shadow: 0 16px 48px rgba(130, 160, 200, 0.18);
             border: 1px solid rgba(200, 220, 240, 0.5);
         }
         .app-title {
             text-align: center;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 300;
             color: #5a7a8a;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             letter-spacing: 2px;
         }
-        .token-upload-row {
+        .token-row {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 22px;
+            margin-bottom: 18px;
             align-items: center;
             background: #ffffffdd;
-            padding: 8px 12px;
+            padding: 8px 14px;
             border-radius: 60px;
-            backdrop-filter: blur(2px);
-            box-shadow: 0 4px 12px rgba(150, 180, 210, 0.08);
+            box-shadow: 0 2px 10px rgba(150, 180, 210, 0.08);
         }
-        .token-upload-row input[type="password"] {
-            flex: 2 1 160px;
+        .token-row input[type="password"] {
+            flex: 2 1 180px;
             padding: 10px 16px;
             border: 1px solid #c8dce8;
             border-radius: 40px;
             font-size: 0.9rem;
             background: #fafdff;
             outline: none;
-            transition: 0.2s;
             font-family: monospace;
-            letter-spacing: 0.5px;
         }
-        .token-upload-row input[type="password"]:focus { border-color: #8ab3d0; box-shadow: 0 0 0 3px #d6eaf7; }
+        .token-row input[type="password"]:focus { border-color: #8ab3d0; box-shadow: 0 0 0 3px #d6eaf7; }
         .token-status {
             font-size: 0.7rem;
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 30px;
             white-space: nowrap;
+            font-weight: 500;
         }
-        .token-status.valid { background: #e6f4e6; color: #2d7a3a; }
-        .token-status.invalid { background: #fde8e8; color: #c0392b; }
-        .token-status.warning { background: #fdf3e0; color: #b9770e; }
-        .upload-btn-wrapper {
-            flex: 1 1 110px;
+        .token-status.valid { background: #d4edda; color: #155724; }
+        .token-status.invalid { background: #f8d7da; color: #721c24; }
+        .token-status.warning { background: #fff3cd; color: #856404; }
+        .upload-btn-wrap {
             position: relative;
             overflow: hidden;
             display: inline-block;
+            flex: 0 0 auto;
         }
-        .upload-btn-wrapper input[type="file"] {
+        .upload-btn-wrap input[type="file"] {
             position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
         }
-        .upload-btn-wrapper .upload-btn {
+        .upload-btn-wrap .upload-btn {
             background: #8ab3d0;
             color: white;
-            padding: 10px 16px;
+            padding: 10px 18px;
             border-radius: 60px;
             font-size: 0.85rem;
             font-weight: 500;
             border: none;
-            width: 100%;
-            text-align: center;
-            transition: 0.2s;
-            box-shadow: 0 4px 8px #8ab3d066;
             cursor: pointer;
+            box-shadow: 0 4px 10px #8ab3d066;
+            transition: 0.2s;
+            display: inline-block;
         }
-        .upload-btn-wrapper .upload-btn:hover { background: #6f9bb8; transform: scale(0.97); }
+        .upload-btn-wrap .upload-btn:hover { background: #6f9bb8; transform: scale(0.97); }
         .main-tabs {
             display: flex;
             gap: 6px;
-            margin: 10px 0 18px;
+            margin: 8px 0 16px;
             justify-content: center;
             flex-wrap: wrap;
         }
         .main-tabs button {
             background: #e9f2fa;
             border: none;
-            padding: 10px 18px;
+            padding: 10px 20px;
             border-radius: 60px;
             font-weight: 600;
             font-size: 1rem;
             color: #2f4b5e;
-            flex: 1 1 70px;
+            flex: 1 1 80px;
             transition: 0.2s;
             border: 1px solid #c5dbea;
-            box-shadow: 0 2px 6px rgba(100, 140, 180, 0.05);
             cursor: pointer;
         }
         .main-tabs button.active {
             background: #8ab3d0;
             color: white;
             border-color: #6d9bbb;
-            box-shadow: 0 6px 14px #8ab3d066;
+            box-shadow: 0 6px 16px #8ab3d066;
         }
         .main-tabs button:active { transform: scale(0.94); }
         .content-panel {
             background: #fafdff;
-            border-radius: 40px;
+            border-radius: 32px;
             padding: 18px 14px 22px;
             box-shadow: inset 0 1px 8px #dcecf7, 0 8px 18px #b8d0e0a0;
-            min-height: 360px;
+            min-height: 380px;
         }
-        .sub-tabs {
+        /* 成績專用 */
+        .grade-layout {
             display: flex;
-            gap: 5px;
+            gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 14px;
         }
-        .sub-tabs button {
+        .grade-sidebar {
+            flex: 0 0 140px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .grade-sidebar button {
             background: #eef4f9;
             border: none;
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #2f4b5e;
-            border: 1px solid #d3e3ef;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
             cursor: pointer;
+            text-align: left;
+            border: 1px solid #d3e3ef;
+            transition: 0.15s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .sub-tabs button.active {
-            background: #aac7dd;
-            color: #1b3342;
-            border-color: #8ab3d0;
+        .grade-sidebar button.active {
+            background: #8ab3d0;
+            color: white;
+            border-color: #6d9bbb;
         }
-        .sub-content {
+        .grade-content {
+            flex: 1;
+            min-width: 200px;
             background: #f7faff;
-            border-radius: 28px;
-            padding: 16px 12px;
-            min-height: 240px;
+            border-radius: 24px;
+            padding: 14px;
             border: 1px solid #dcebf5;
+            max-height: 400px;
+            overflow-y: auto;
         }
-        .flex-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+        .grade-subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .grade-subject-grid button {
+            background: #e9f2fa;
+            border: 1px solid #c5dbea;
+            border-radius: 16px;
+            padding: 6px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .grade-subject-grid button:active { transform: scale(0.94); }
+        .grade-subject-grid button.active { background: #8ab3d0; color: white; border-color: #6d9bbb; }
+        .semester-input {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .semester-input input { flex: 1; min-width: 120px; }
+        /* 日曆 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin: 10px 0;
+        }
+        .calendar-grid .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            background: #f0f6fc;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid transparent;
+        }
+        .calendar-grid .day:hover { background: #dcecf7; }
+        .calendar-grid .day.has-event { background: #8ab3d0; color: white; font-weight: 600; }
+        .calendar-grid .day.other-month { color: #aab8c8; }
+        .calendar-grid .weekday {
+            font-weight: 600;
+            color: #5a7a8a;
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 4px 0;
+        }
+        .calendar-events {
+            margin-top: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .calendar-events .event-item {
+            background: #eef4f9;
+            border-radius: 12px;
+            padding: 4px 12px;
+            margin: 2px 0;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        /* 日記照片 */
+        .diary-photo {
+            max-width: 100%;
+            border-radius: 16px;
+            margin: 8px 0;
+            border: 2px solid #dcebf5;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        /* 其他 */
+        .flex-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
         .btn-icon {
             background: #8ab3d0;
             border: none;
             color: white;
-            padding: 6px 16px;
+            padding: 6px 18px;
             border-radius: 60px;
             font-weight: 500;
             font-size: 0.85rem;
-            box-shadow: 0 2px 6px #8ab3d066;
-            transition: 0.1s;
+            box-shadow: 0 2px 8px #8ab3d066;
             cursor: pointer;
+            transition: 0.1s;
         }
         .btn-icon:active { transform: scale(0.92); }
-        .btn-danger { background: #d48a8a; box-shadow: 0 2px 6px #d48a8a66; }
+        .btn-danger { background: #d48a8a; box-shadow: 0 2px 8px #d48a8a66; }
+        .btn-success { background: #6fbf8a; box-shadow: 0 2px 8px #6fbf8a66; }
         input, select, textarea {
             background: #ffffff;
             border: 1px solid #c8dce8;
             border-radius: 40px;
-            padding: 10px 14px;
+            padding: 10px 16px;
             font-size: 0.9rem;
             width: 100%;
             margin: 4px 0;
@@ -183,41 +270,32 @@
         textarea { border-radius: 20px; resize: vertical; min-height: 60px; }
         .record-card {
             background: white;
-            border-radius: 24px;
-            padding: 12px 16px;
-            margin: 10px 0;
+            border-radius: 20px;
+            padding: 10px 14px;
+            margin: 6px 0;
             box-shadow: 0 2px 8px #d0e0ec;
+            font-size: 0.9rem;
         }
-        .record-card img { max-width: 100%; border-radius: 16px; margin-top: 8px; }
-        .search-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+        .search-bar { display: flex; gap: 6px; margin-bottom: 10px; }
         .search-bar input { flex: 1; }
-        .water-track { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0; }
+        .water-track { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 10px 0; }
         .cup {
-            width: 44px; height: 54px;
-            background: #c8e0f0; border-radius: 8px 8px 20px 20px;
+            width: 40px; height: 50px;
+            background: #c8e0f0; border-radius: 6px 6px 16px 16px;
             border: 2px solid #8ab3d0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; cursor: pointer; transition: 0.1s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            font-size: 1.2rem; cursor: pointer; transition: 0.1s;
             user-select: none;
         }
         .cup.filled { background: #6d9bbb; border-color: #4f7f9a; color: white; }
         .security-notice {
-            font-size: 0.7rem;
-            color: #7a8a9a;
-            text-align: center;
-            margin-top: 12px;
-            padding: 6px;
-            background: #f0f5fa;
-            border-radius: 30px;
-        }
-        .token-helper {
             font-size: 0.65rem;
             color: #8a9aaa;
-            padding: 2px 10px;
-            background: #f0f4f8;
-            border-radius: 20px;
-            white-space: nowrap;
+            text-align: center;
+            margin-top: 10px;
+            padding: 4px;
+            background: #f0f5fa;
+            border-radius: 30px;
         }
         .import-export {
             display: flex;
@@ -227,25 +305,51 @@
             flex-wrap: wrap;
         }
         .import-export .btn-icon { font-size: 0.75rem; padding: 4px 14px; }
-        .photo-preview {
-            max-width: 100%;
-            border-radius: 16px;
+        .tab-content { display: block; }
+        .hidden { display: none; }
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
             margin: 8px 0;
-            border: 2px solid #dcebf5;
         }
-        @media (max-width: 480px) { .token-upload-row input[type="password"] { flex: 1 1 100px; } }
+        .photo-gallery img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 2px solid #dcebf5;
+            cursor: pointer;
+        }
+        .mood-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mood-selector button {
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid #c8dce8;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .mood-selector button.selected { background: #8ab3d0; color: white; border-color: #6d9bbb; }
+        @media (max-width: 600px) {
+            .grade-sidebar { flex: 0 0 100%; flex-direction: row; flex-wrap: wrap; }
+            .grade-sidebar button { flex: 1 0 auto; }
+        }
     </style>
 </head>
 <body>
 <div class="app-wrapper" id="app">
     <div class="app-title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
-    
-    <div class="token-upload-row">
+
+    <div class="token-row">
         <input type="password" id="githubToken" placeholder="🔑 GitHub Token (ghp_...)" value="">
-        <span class="token-status invalid" id="tokenStatus">⚠️ 請設定 Token</span>
-        <span class="token-helper">ghp_xxxx</span>
-        <div class="upload-btn-wrapper">
-            <div class="upload-btn">📸 上傳圖片</div>
+        <span class="token-status invalid" id="tokenStatus">⚠️ 請設定</span>
+        <div class="upload-btn-wrap">
+            <span class="upload-btn">📸 上傳照片</span>
             <input type="file" id="uploadImage" accept="image/*">
         </div>
     </div>
@@ -259,283 +363,320 @@
     <div class="content-panel" id="mainPanel"></div>
 
     <div class="import-export">
-        <button class="btn-icon" id="exportDataBtn">📤 匯出資料</button>
-        <button class="btn-icon" id="importDataBtn">📥 匯入資料</button>
-        <input type="file" id="importFileInput" accept=".json" style="display:none;">
+        <button class="btn-icon" id="exportBtn">📤 匯出</button>
+        <button class="btn-icon" id="importBtn">📥 匯入</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;">
     </div>
-    
-    <div class="security-notice">🔒 資料僅儲存在此裝置，請定期備份</div>
+    <div class="security-notice">🔒 資料僅儲存在此裝置</div>
 </div>
 
 <script>
-(function(){
-    const STORAGE_KEY = 'cherry_app_data_encrypted';
-    const TOKEN_KEY = 'cherry_github_token';
-    
-    function simpleEncode(str) { return btoa(encodeURIComponent(str)); }
-    function simpleDecode(str) {
-        try { return decodeURIComponent(atob(str)); }
-        catch(e) { return null; }
-    }
+(function() {
+    const STORAGE_KEY = 'cherry_data';
+    const TOKEN_KEY = 'cherry_token';
 
-    function saveStore(store) {
-        try {
-            localStorage.setItem(STORAGE_KEY, simpleEncode(JSON.stringify(store)));
-            return true;
-        } catch(e) { return false; }
-    }
+    function encode(s) { return btoa(encodeURIComponent(s)); }
+    function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
 
+    function saveStore(data) {
+        try { localStorage.setItem(STORAGE_KEY, encode(JSON.stringify(data))); return true; }
+        catch(e) { return false; }
+    }
     function loadStore() {
         try {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (!data) return null;
-            return JSON.parse(simpleDecode(data));
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return null;
+            return JSON.parse(decode(raw));
         } catch(e) { return null; }
     }
 
-    function isValidGitHubToken(token) {
-        return /^ghp_[A-Za-z0-9]{36,40}$/.test(token);
-    }
+    function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
 
-    // 初始化
+    // 預設學段列表（無限提供）
+    const DEFAULT_SEMESTERS = [
+        '2024/2025 第一段', '2024/2025 第二段',
+        '2025/2026 第一段', '2025/2026 第二段',
+        '2026/2027 第一段', '2026/2027 第二段',
+        '2027/2028 第一段', '2027/2028 第二段',
+        '2028/2029 第一段', '2028/2029 第二段',
+        '2029/2030 第一段', '2029/2030 第二段'
+    ];
+    const SUBJECTS = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
+
     let store = {
         token: localStorage.getItem(TOKEN_KEY) || '',
         study: { calendar: [], todos: [], grades: {} },
-        diary: { entries: [] },
-        health: {
-            bmiRecords: [],
-            water: { today: { date: '', cups: 0 }, history: [] },
-            exercises: []
-        }
+        diary: { entries: [], photos: [] },
+        health: { bmi: [], water: { today: { date: '', cups: 0 }, history: [] }, exercise: [] }
     };
-
     const saved = loadStore();
     if (saved) store = saved;
 
+    // 確保學段存在
+    DEFAULT_SEMESTERS.forEach(s => { if (!store.study.grades[s]) store.study.grades[s] = {}; });
+
     const tokenInput = document.getElementById('githubToken');
     tokenInput.value = store.token || '';
-
     tokenInput.addEventListener('change', function() {
         store.token = this.value.trim();
         localStorage.setItem(TOKEN_KEY, store.token);
         saveStore(store);
-        updateTokenStatus();
+        updateStatus();
     });
 
-    function updateTokenStatus() {
+    function updateStatus() {
         const el = document.getElementById('tokenStatus');
-        const token = tokenInput.value.trim();
-        if (!token) { el.textContent = '⚠️ 請設定 Token'; el.className = 'token-status invalid'; }
-        else if (isValidGitHubToken(token)) { el.textContent = '✅ 有效'; el.className = 'token-status valid'; }
+        const t = tokenInput.value.trim();
+        if (!t) { el.textContent = '⚠️ 請設定'; el.className = 'token-status invalid'; }
+        else if (validToken(t)) { el.textContent = '✅ 有效'; el.className = 'token-status valid'; }
         else { el.textContent = '⚠️ 格式錯誤'; el.className = 'token-status warning'; }
     }
 
-    // 圖片上傳
-    let pendingImage = null;
+    // 上傳圖片
+    let pendingPhoto = null;
     document.getElementById('uploadImage').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
-            pendingImage = ev.target.result;
-            alert('📸 圖片已上傳！請到日記中新增使用。');
-            switchMainTab('diary');
+            pendingPhoto = ev.target.result;
+            // 同時存入照片庫
+            store.diary.photos.push({ id: Date.now(), data: pendingPhoto, date: new Date().toISOString().slice(0,10) });
+            saveStore(store);
+            alert('📸 照片已上傳！可在日記中使用，或到日記查看照片庫。');
+            switchTab('diary');
+            renderMain();
         };
         reader.readAsDataURL(file);
         this.value = '';
     });
 
     // 匯出匯入
-    document.getElementById('exportDataBtn').addEventListener('click', function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定有效 Token'); return; }
         const data = localStorage.getItem(STORAGE_KEY);
-        if (!data) { alert('沒有資料'); return; }
-        const blob = new Blob([data], {type: 'application/json'});
+        if (!data) { alert('無資料'); return; }
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `cherry_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.href = URL.createObjectURL(new Blob([data], {type:'application/json'}));
+        a.download = `cherry_${new Date().toISOString().slice(0,10)}.json`;
         a.click();
     });
-
-    document.getElementById('importDataBtn').addEventListener('click', function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
-        document.getElementById('importFileInput').click();
+    document.getElementById('importBtn').addEventListener('click', function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定有效 Token'); return; }
+        document.getElementById('importFile').click();
     });
-
-    document.getElementById('importFileInput').addEventListener('change', function(e) {
+    document.getElementById('importFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
             try {
                 const data = ev.target.result;
-                JSON.parse(simpleDecode(data) || '{}');
+                JSON.parse(decode(data) || '{}');
                 localStorage.setItem(STORAGE_KEY, data);
-                alert('✅ 匯入成功！重新整理頁面。');
+                alert('✅ 匯入成功！重新整理。');
                 location.reload();
-            } catch(err) {
-                alert('❌ 檔案格式錯誤');
-            }
+            } catch(err) { alert('❌ 檔案格式錯誤'); }
         };
         reader.readAsText(file);
         this.value = '';
     });
 
-    // 渲染
-    let currentMain = 'study';
+    // 主選單
+    let currentTab = 'study';
     let currentSub = 'calendar';
+    let currentSemester = DEFAULT_SEMESTERS[0] || '2024/2025 第一段';
+    let currentSubject = SUBJECTS[0] || '宗教';
 
-    function switchMainTab(tab) {
-        currentMain = tab;
+    function switchTab(tab) {
+        currentTab = tab;
         document.querySelectorAll('.main-tabs button').forEach(b => {
             b.classList.toggle('active', b.dataset.tab === tab);
         });
         renderMain();
     }
-
-    document.querySelectorAll('.main-tabs button').forEach(btn => {
-        btn.addEventListener('click', () => switchMainTab(btn.dataset.tab));
+    document.querySelectorAll('.main-tabs button').forEach(b => {
+        b.addEventListener('click', () => switchTab(b.dataset.tab));
     });
 
-    function switchSubTab(sub) {
-        currentSub = sub;
-        renderMain();
-    }
+    function switchSub(sub) { currentSub = sub; renderMain(); }
+    function switchSemester(sem) { currentSemester = sem; renderMain(); }
+    function switchSubject(sub) { currentSubject = sub; renderMain(); }
 
     function renderMain() {
         const panel = document.getElementById('mainPanel');
-        if (currentMain === 'study') {
-            panel.innerHTML = renderStudy();
-            panel.querySelectorAll('.sub-tabs button').forEach(b => {
-                b.addEventListener('click', () => switchSubTab(b.dataset.sub));
-            });
-            const subContainer = panel.querySelector('.sub-content');
-            if (currentSub === 'calendar') subContainer.innerHTML = renderCalendar();
-            else if (currentSub === 'todos') subContainer.innerHTML = renderTodos();
-            else if (currentSub === 'grades') subContainer.innerHTML = renderGrades();
-        } else if (currentMain === 'diary') {
-            panel.innerHTML = renderDiary();
-        } else if (currentMain === 'health') {
-            panel.innerHTML = renderHealth();
-        }
-        attachEvents();
-        updateTokenStatus();
+        if (currentTab === 'study') panel.innerHTML = renderStudy();
+        else if (currentTab === 'diary') panel.innerHTML = renderDiary();
+        else if (currentTab === 'health') panel.innerHTML = renderHealth();
+        updateStatus();
+        bindEvents();
     }
 
-    // ===== 學習 =====
+    // ========== 學習 ==========
     function renderStudy() {
-        return `<div class="sub-tabs">
-            <button data-sub="calendar" class="${currentSub==='calendar'?'active':''}">📅 日曆</button>
-            <button data-sub="todos" class="${currentSub==='todos'?'active':''}">✅ 備忘錄</button>
-            <button data-sub="grades" class="${currentSub==='grades'?'active':''}">📊 成績</button>
-        </div><div class="sub-content"></div>`;
+        return `
+            <div class="sub-tabs" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="${currentSub==='calendar'?'active':''}" onclick="window._switchSub('calendar')">📅 日曆</button>
+                <button class="${currentSub==='todos'?'active':''}" onclick="window._switchSub('todos')">✅ 備忘錄</button>
+                <button class="${currentSub==='grades'?'active':''}" onclick="window._switchSub('grades')">📊 成績</button>
+            </div>
+            <div class="sub-content">
+                ${currentSub === 'calendar' ? renderCalendar() : ''}
+                ${currentSub === 'todos' ? renderTodos() : ''}
+                ${currentSub === 'grades' ? renderGrades() : ''}
+            </div>
+        `;
     }
 
+    // ----- 日曆 -----
     function renderCalendar() {
-        const items = store.study.calendar || [];
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addCalendar()">➕ 新增行程</button></div>`;
-        if (items.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📅 還沒有行程</p>`;
-        items.forEach((item, idx) => {
-            html += `<div class="record-card">📌 <strong>${item.date||'無日期'}</strong> — ${item.content||''} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delCalendar(${idx})">🗑️</button></div>`;
-        });
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const today = now.getDate();
+
+        let html = `<div class="flex-row">
+            <span style="font-weight:600;font-size:1.1rem;">${year}年 ${month+1}月</span>
+            <button class="btn-icon" onclick="window._addEvent()">➕ 新增行程</button>
+        </div>
+        <div class="calendar-grid">`;
+        const weekdays = ['日','一','二','三','四','五','六'];
+        weekdays.forEach(d => html += `<div class="weekday">${d}</div>`);
+        for (let i = 0; i < firstDay; i++) html += `<div class="day other-month"></div>`;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const hasEvent = store.study.calendar.some(e => e.date === dateStr);
+            html += `<div class="day ${hasEvent?'has-event':''}" onclick="window._showEvents('${dateStr}')">${d}</div>`;
+        }
+        html += `</div><div class="calendar-events" id="calEvents">`;
+
+        // 顯示今天行程
+        const todayStr = `${year}-${String(month+1).padStart(2,'0')}-${String(today).padStart(2,'0')}`;
+        const todayEvents = store.study.calendar.filter(e => e.date === todayStr);
+        if (todayEvents.length > 0) {
+            html += `<div style="font-weight:600;font-size:0.85rem;margin:4px 0;">📌 今天行程</div>`;
+            todayEvents.forEach(e => {
+                html += `<div class="event-item"><span>${e.content}</span><button class="btn-icon btn-danger" style="padding:2px 10px;font-size:0.7rem;" onclick="window._delEvent('${e.date}','${e.content}')">✕</button></div>`;
+            });
+        } else {
+            html += `<div style="color:#8a9ba8;font-size:0.85rem;padding:4px 0;">今天沒有行程 ✨</div>`;
+        }
+        html += `</div>`;
         return html;
     }
 
-    window.addCalendar = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+    window._switchSub = function(sub) { currentSub = sub; renderMain(); };
+    window._addEvent = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         const date = prompt('📅 日期 (YYYY-MM-DD)');
         if (!date) return;
-        const content = prompt('📝 內容');
-        if (content === null) return;
+        const content = prompt('📝 行程內容');
+        if (!content) return;
         store.study.calendar.push({ date, content });
         saveStore(store);
         renderMain();
     };
-
-    window.delCalendar = function(idx) {
-        if (!confirm('確定刪除嗎？')) return;
-        store.study.calendar.splice(idx, 1);
-        saveStore(store);
-        renderMain();
+    window._showEvents = function(date) {
+        const events = store.study.calendar.filter(e => e.date === date);
+        if (events.length === 0) { alert('這天沒有行程'); return; }
+        let msg = `📅 ${date} 行程：\n`;
+        events.forEach((e,i) => msg += `${i+1}. ${e.content}\n`);
+        alert(msg);
+    };
+    window._delEvent = function(date, content) {
+        if (!confirm(`刪除「${content}」？`)) return;
+        const idx = store.study.calendar.findIndex(e => e.date === date && e.content === content);
+        if (idx > -1) { store.study.calendar.splice(idx, 1); saveStore(store); renderMain(); }
     };
 
+    // ----- 備忘錄 -----
     function renderTodos() {
         const todos = store.study.todos || [];
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addTodo()">➕ 新增待辦</button></div>`;
-        if (todos.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">✨ 沒有待辦事項</p>`;
-        todos.forEach((t, idx) => {
-            html += `<div class="record-card">${t.done ? '✅' : '⭕'} ${t.text} <button class="btn-icon" style="float:right;margin-left:4px;" onclick="window.toggleTodo(${idx})">${t.done ? '↩️' : '✅'}</button></div>`;
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window._addTodo()">➕ 新增待辦</button></div>`;
+        if (!todos.length) html += `<p style="color:#8a9ba8;padding:12px;">✨ 沒有待辦事項</p>`;
+        todos.forEach((t, i) => {
+            html += `<div class="record-card">${t.done ? '✅' : '⭕'} ${t.text} 
+                <button class="btn-icon ${t.done?'btn-success':''}" style="float:right;margin-left:4px;padding:2px 12px;" onclick="window._toggleTodo(${i})">${t.done ? '↩️' : '✅'}</button>
+            </div>`;
         });
         return html;
     }
-
-    window.addTodo = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+    window._addTodo = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         const text = prompt('✏️ 待辦事項');
         if (!text) return;
         store.study.todos.push({ id: Date.now(), text, done: false });
-        saveStore(store);
-        renderMain();
+        saveStore(store); renderMain();
+    };
+    window._toggleTodo = function(i) {
+        store.study.todos[i].done = !store.study.todos[i].done;
+        if (store.study.todos[i].done) store.study.todos.splice(i, 1);
+        saveStore(store); renderMain();
     };
 
-    window.toggleTodo = function(idx) {
-        store.study.todos[idx].done = !store.study.todos[idx].done;
-        if (store.study.todos[idx].done) {
-            store.study.todos.splice(idx, 1);
-        }
-        saveStore(store);
-        renderMain();
-    };
-
+    // ----- 成績 -----
     function renderGrades() {
-        const grades = store.study.grades || {};
-        const semesters = Object.keys(grades).sort();
-        const subjects = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
-        
-        // 預設學段
-        const defaultSemesters = ['2024/2025 第一段', '2024/2025 第二段', '2025/2026 第一段', '2025/2026 第二段'];
-        defaultSemesters.forEach(sem => {
-            if (!grades[sem]) grades[sem] = {};
-        });
-        store.study.grades = grades;
-        saveStore(store);
+        const semesters = Object.keys(store.study.grades).sort();
+        const sem = currentSemester;
+        const sub = currentSubject;
 
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addGrade()">➕ 新增成績</button></div>`;
-        const allSemesters = Object.keys(grades).sort();
-        if (allSemesters.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📂 尚未建立學段</p>`;
-        allSemesters.forEach(sem => {
-            html += `<details><summary><strong>📁 ${sem}</strong></summary>`;
-            subjects.forEach(sub => {
-                const records = grades[sem]?.[sub] || [];
-                if (records.length === 0) {
-                    html += `<div style="padding:4px 12px;">${sub}：暫無記錄</div>`;
-                } else {
-                    html += `<div style="padding:6px 12px;background:#eef6fc;border-radius:20px;margin:4px 0;"><strong>${sub}</strong>`;
-                    let prev = null;
-                    records.forEach((r, idx) => {
-                        const encourage = (prev && r.score > prev.score) ? ' 🎉 進步了！' : (prev && r.score < prev.score ? ' 📉 加油' : '');
-                        html += `<div style="font-size:0.9rem;padding:2px 0;">📅 ${r.date||''} 分數：${r.score} ${r.note?'('+r.note+')':''} ${encourage} <button class="btn-icon btn-danger" onclick="window.delGrade('${sem}','${sub}',${idx})">🗑️</button></div>`;
-                        prev = r;
-                    });
-                    html += `</div>`;
-                }
-            });
-            html += `</details>`;
+        let html = `
+            <div class="semester-input">
+                <input type="text" id="newSemester" placeholder="新增學段 (如 2030/2031 第一段)" value="${sem}">
+                <button class="btn-icon" onclick="window._addSemester()">➕ 新增學段</button>
+            </div>
+            <div class="grade-layout">
+                <div class="grade-sidebar">
+                    ${semesters.map(s => `<button class="${s===sem?'active':''}" onclick="window._switchSemester('${s}')">${s}</button>`).join('')}
+                </div>
+                <div class="grade-content">
+                    <div style="font-weight:600;margin-bottom:6px;">📁 ${sem}</div>
+                    <div class="grade-subject-grid">
+                        ${SUBJECTS.map(s => `<button class="${s===sub?'active':''}" onclick="window._switchSubject('${s}')">${s}</button>`).join('')}
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button class="btn-icon" onclick="window._addGrade()">➕ 新增成績</button>
+                        <div id="gradeRecords">
+                            ${renderGradeRecords(sem, sub)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        return html;
+    }
+
+    function renderGradeRecords(sem, sub) {
+        const records = store.study.grades[sem]?.[sub] || [];
+        if (!records.length) return `<p style="color:#8a9ba8;padding:8px 0;">📝 尚無成績記錄</p>`;
+        let html = '';
+        let prev = null;
+        records.forEach((r, i) => {
+            const encourage = (prev && r.score > prev.score) ? ' 🎉 進步！' : (prev && r.score < prev.score ? ' 📉 加油' : '');
+            html += `<div class="record-card" style="font-size:0.85rem;padding:6px 12px;">📅 ${r.date} 分數：${r.score} ${r.note?'('+r.note+')':''} ${encourage} <button class="btn-icon btn-danger" style="padding:2px 10px;font-size:0.7rem;float:right;" onclick="window._delGrade('${sem}','${sub}',${i})">🗑️</button></div>`;
+            prev = r;
         });
         return html;
     }
 
-    window.addGrade = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
-        const sem = prompt('學段 (例如 2024/2025 第一段)');
-        if (!sem) return;
-        const sub = prompt('科目 (宗教,公民,語文,英文,數學,中國歷史,世界歷史,地理,物理,化學,生物,資訊科技,體育,音樂,藝術,其他)');
-        if (!sub) return;
+    window._switchSemester = function(s) { currentSemester = s; renderMain(); };
+    window._switchSubject = function(s) { currentSubject = s; renderMain(); };
+    window._addSemester = function() {
+        const input = document.getElementById('newSemester');
+        if (!input) return;
+        const val = input.value.trim();
+        if (!val) { alert('請輸入學段名稱'); return; }
+        if (store.study.grades[val]) { alert('學段已存在'); return; }
+        store.study.grades[val] = {};
+        currentSemester = val;
+        saveStore(store); renderMain();
+    };
+    window._addGrade = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
+        const sem = currentSemester;
+        const sub = currentSubject;
         const date = prompt('日期 (YYYY-MM-DD)');
         if (!date) return;
         const score = parseFloat(prompt('分數'));
@@ -544,243 +685,216 @@
         if (!store.study.grades[sem]) store.study.grades[sem] = {};
         if (!store.study.grades[sem][sub]) store.study.grades[sem][sub] = [];
         store.study.grades[sem][sub].push({ date, score, note });
-        saveStore(store);
-        renderMain();
+        saveStore(store); renderMain();
     };
-
-    window.delGrade = function(sem, sub, idx) {
+    window._delGrade = function(sem, sub, idx) {
         if (!confirm('確定刪除嗎？')) return;
         if (store.study.grades[sem]?.[sub]) {
             store.study.grades[sem][sub].splice(idx, 1);
-            if (store.study.grades[sem][sub].length === 0) delete store.study.grades[sem][sub];
-            if (Object.keys(store.study.grades[sem]).length === 0) delete store.study.grades[sem];
-            saveStore(store);
-            renderMain();
+            if (!store.study.grades[sem][sub].length) delete store.study.grades[sem][sub];
+            saveStore(store); renderMain();
         }
     };
 
-    // ===== 日記 =====
+    // ========== 日記 ==========
     function renderDiary() {
         const entries = store.diary.entries || [];
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addDiary()">➕ 新增日記</button></div>`;
-        html += `<div class="search-bar"><input type="date" id="diarySearch"><button class="btn-icon" onclick="window.searchDiary()">🔍</button></div>`;
-        html += `<div id="diaryList">`;
-        if (entries.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📖 還沒有日記</p>`;
-        const show = entries.slice(-10).reverse();
-        show.forEach(entry => {
-            html += `<div class="record-card">📅 ${entry.date||''} ${entry.weather||''} ${entry.mood||''}<br>${entry.content||''}`;
-            if (entry.image) html += `<br><img src="${entry.image}" class="photo-preview">`;
-            html += ` <button class="btn-icon" style="float:right;" onclick="window.editDiary(${entry.id})">✏️</button></div>`;
-        });
-        html += `</div>`;
+        const photos = store.diary.photos || [];
+        let html = `
+            <div class="flex-row">
+                <button class="btn-icon" onclick="window._addDiary()">➕ 新增日記</button>
+                <span style="font-size:0.8rem;color:#8a9ba8;">📸 照片庫: ${photos.length}張</span>
+            </div>
+            <div class="search-bar">
+                <input type="date" id="diarySearch">
+                <button class="btn-icon" onclick="window._searchDiary()">🔍</button>
+            </div>
+            <div style="max-height:320px;overflow-y:auto;">
+                ${entries.length === 0 ? '<p style="color:#8a9ba8;padding:12px;">📖 還沒有日記</p>' : ''}
+                ${entries.slice(-8).reverse().map(e => `
+                    <div class="record-card">
+                        <div>📅 ${e.date||''} ${e.weather||''} ${e.mood||''}</div>
+                        <div>${e.content||''}</div>
+                        ${e.image ? `<img src="${e.image}" class="diary-photo">` : ''}
+                        <button class="btn-icon" style="margin-top:4px;padding:2px 12px;font-size:0.75rem;" onclick="window._editDiary(${e.id})">✏️ 編輯</button>
+                    </div>
+                `).join('')}
+            </div>
+            <div style="margin-top:8px;">
+                <div style="font-weight:600;font-size:0.85rem;">📸 照片庫</div>
+                <div class="photo-gallery">
+                    ${photos.slice(-6).reverse().map(p => `
+                        <img src="${p.data}" onclick="window._viewPhoto('${p.data}')">
+                    `).join('')}
+                </div>
+            </div>
+        `;
         return html;
     }
 
-    window.addDiary = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
-        const pwd = prompt('🔒 請輸入密碼 (cherry)');
+    window._addDiary = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
+        const pwd = prompt('🔒 密碼 (cherry)');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-        const date = prompt('日期 (YYYY-MM-DD)');
-        if (!date) return;
+        const date = prompt('日期 (YYYY-MM-DD)') || new Date().toISOString().slice(0,10);
         const weather = prompt('天氣 (晴/陰/雨/雪)') || '';
         const mood = prompt('心情 (開心/普通/難過)') || '';
         const content = prompt('內容') || '';
-        const image = pendingImage || '';
-        pendingImage = null;
+        const image = pendingPhoto || '';
+        pendingPhoto = null;
         store.diary.entries.push({ id: Date.now(), date, weather, mood, content, image });
-        saveStore(store);
-        renderMain();
+        saveStore(store); renderMain();
     };
-
-    window.editDiary = function(id) {
+    window._editDiary = function(id) {
         const entry = store.diary.entries.find(e => e.id === id);
         if (!entry) return;
-        const pwd = prompt('🔒 輸入密碼修改 (cherry)');
+        const pwd = prompt('🔒 密碼 (cherry)');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         const newContent = prompt('修改內容', entry.content);
         if (newContent !== null) entry.content = newContent;
-        const newDate = prompt('修改日期', entry.date);
-        if (newDate !== null) entry.date = newDate;
-        saveStore(store);
-        renderMain();
+        saveStore(store); renderMain();
     };
-
-    window.searchDiary = function() {
+    window._searchDiary = function() {
         const date = document.getElementById('diarySearch')?.value;
-        if (!date) { alert('請輸入日期'); return; }
+        if (!date) { alert('請選擇日期'); return; }
         const found = store.diary.entries.filter(e => e.date === date);
-        if (found.length === 0) alert('沒有找到當天日記');
+        if (!found.length) alert('沒有找到當天日記');
         else {
-            let msg = found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n');
-            alert(msg);
+            alert(found.map(e => `${e.date} ${e.weather} ${e.mood}\n${e.content}`).join('\n---\n'));
         }
     };
+    window._viewPhoto = function(data) {
+        const win = window.open('', '_blank');
+        win.document.write(`<img src="${data}" style="max-width:100%;height:auto;">`);
+    };
 
-    // ===== 健康 =====
+    // ========== 健康 ==========
     function renderHealth() {
-        let html = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-            <button class="btn-icon" onclick="window.showBMI()">🧮 BMI</button>
-            <button class="btn-icon" onclick="window.showWater()">💧 喝水</button>
-            <button class="btn-icon" onclick="window.showExercise()">🏃 運動</button>
-        </div><div id="healthContent">`;
-        html += renderBMI();
-        html += `</div>`;
+        let html = `
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="btn-icon" onclick="window._showBMI()">🧮 BMI</button>
+                <button class="btn-icon" onclick="window._showWater()">💧 喝水</button>
+                <button class="btn-icon" onclick="window._showExercise()">🏃 運動</button>
+            </div>
+            <div id="healthContent">${renderBMI()}</div>
+        `;
         return html;
     }
 
     function renderBMI() {
-        const records = store.health.bmiRecords || [];
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addBMI()">➕ 記錄 BMI</button></div>`;
-        if (records.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">📊 還沒有 BMI 紀錄</p>`;
-        records.forEach((r, idx) => {
+        const records = store.health.bmi || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window._addBMI()">➕ 記錄 BMI</button></div>`;
+        if (!records.length) html += `<p style="color:#8a9ba8;padding:12px;">📊 還沒有 BMI 紀錄</p>`;
+        records.forEach((r, i) => {
             let encourage = '';
-            if (idx > 0) {
-                const prev = records[idx-1];
-                const statusMap = {'過度肥胖':0,'輕度肥胖':1,'正常':2,'輕度瘦弱':3,'過度瘦弱':4};
-                const cur = statusMap[r.status]||0, pre = statusMap[prev.status]||0;
-                if (cur < pre) encourage = ' 🌟 進步鼓勵！';
+            if (i > 0) {
+                const prev = records[i-1];
+                const map = {'過度肥胖':0,'輕度肥胖':1,'正常':2,'輕度瘦弱':3,'過度瘦弱':4};
+                if ((map[r.status]||0) < (map[prev.status]||0)) encourage = ' 🌟 進步！';
             }
-            html += `<div class="record-card">${r.date} 身高${r.height} 體重${r.weight} BMI:${r.bmi} (${r.status}) ${encourage} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delBMI(${idx})">🗑️</button></div>`;
+            html += `<div class="record-card">${r.date} 身高${r.height} 體重${r.weight} BMI:${r.bmi} (${r.status}) ${encourage} <button class="btn-icon btn-danger" style="float:right;padding:2px 12px;" onclick="window._delBMI(${i})">🗑️</button></div>`;
         });
         return html;
     }
-
-    window.addBMI = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
+    window._showBMI = function() { document.getElementById('healthContent').innerHTML = renderBMI(); };
+    window._addBMI = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         const pwd = prompt('🔒 密碼 (cherry)');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
-        const date = prompt('日期') || '';
+        const date = prompt('日期') || new Date().toISOString().slice(0,10);
         const height = parseFloat(prompt('身高 (cm)'));
         const weight = parseFloat(prompt('體重 (kg)'));
-        const age = parseInt(prompt('年齡'));
-        const gender = prompt('性別 (男/女)');
-        if (isNaN(height)||isNaN(weight)||isNaN(age)) return;
+        if (isNaN(height)||isNaN(weight)) return;
         const bmi = weight / ((height/100)**2);
         let status = '正常';
         if (bmi < 16) status = '過度瘦弱';
         else if (bmi < 18.5) status = '輕度瘦弱';
         else if (bmi >= 24 && bmi < 27) status = '輕度肥胖';
         else if (bmi >= 27) status = '過度肥胖';
-        store.health.bmiRecords.push({ date, height, weight, age, gender, bmi: bmi.toFixed(1), status });
-        saveStore(store);
-        renderMain();
+        store.health.bmi.push({ date, height, weight, bmi: bmi.toFixed(1), status });
+        saveStore(store); window._showBMI();
     };
-
-    window.delBMI = function(idx) {
+    window._delBMI = function(i) {
         if (!confirm('確定刪除嗎？')) return;
-        store.health.bmiRecords.splice(idx, 1);
-        saveStore(store);
-        renderMain();
+        store.health.bmi.splice(i, 1);
+        saveStore(store); window._showBMI();
     };
 
-    window.showBMI = function() {
-        document.getElementById('healthContent').innerHTML = renderBMI();
-        attachEvents();
-    };
-
-    window.showWater = function() {
+    window._showWater = function() {
         const today = new Date().toISOString().slice(0,10);
-        let water = store.health.water;
-        if (water.today.date !== today) { 
-            water.today = { date: today, cups: 0 }; 
-            saveStore(store);
-        }
+        const w = store.health.water;
+        if (w.today.date !== today) { w.today = { date: today, cups: 0 }; saveStore(store); }
         let html = `<div class="water-track">`;
         for (let i=0; i<8; i++) {
-            const filled = i < water.today.cups ? 'filled' : '';
-            html += `<div class="cup ${filled}" onclick="window.addCup(${i})">${i<water.today.cups?'💧':'🥤'}</div>`;
+            html += `<div class="cup ${i<w.today.cups?'filled':''}" onclick="window._addCup(${i})">${i<w.today.cups?'💧':'🥤'}</div>`;
         }
-        html += `</div><div>今日已喝 ${water.today.cups} / 8 杯</div>`;
-        html += `<div class="flex-row"><button class="btn-icon" onclick="window.resetWater()">🔄 重置今日</button><button class="btn-icon" onclick="window.waterHistory()">📋 歷史</button></div>`;
+        html += `</div><div>今日已喝 ${w.today.cups} / 8 杯</div>`;
+        html += `<div class="flex-row"><button class="btn-icon" onclick="window._resetWater()">🔄 重置</button><button class="btn-icon" onclick="window._waterHistory()">📋 歷史</button></div>`;
         document.getElementById('healthContent').innerHTML = html;
     };
-
-    window.addCup = function(idx) {
-        const today = new Date().toISOString().slice(0,10);
-        let water = store.health.water;
-        if (water.today.date !== today) { 
-            water.today = { date: today, cups: 0 }; 
-        }
-        if (idx < water.today.cups) return;
-        water.today.cups = Math.min(8, idx+1);
-        saveStore(store);
-        window.showWater();
+    window._addCup = function(idx) {
+        const w = store.health.water;
+        if (idx < w.today.cups) return;
+        w.today.cups = Math.min(8, idx+1);
+        saveStore(store); window._showWater();
+    };
+    window._resetWater = function() {
+        if (!confirm('重置今日喝水？')) return;
+        const w = store.health.water;
+        w.history.push({ date: w.today.date, cups: w.today.cups });
+        w.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
+        saveStore(store); window._showWater();
+    };
+    window._waterHistory = function() {
+        const h = store.health.water.history || [];
+        alert('📋 喝水歷史\n' + (h.length ? h.map(x => `${x.date} : ${x.cups}杯`).join('\n') : '尚無歷史'));
     };
 
-    window.resetWater = function() {
-        if (!confirm('確定重置今日喝水紀錄嗎？')) return;
-        const water = store.health.water;
-        water.history.push({ date: water.today.date, cups: water.today.cups });
-        water.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
-        saveStore(store);
-        window.showWater();
-    };
-
-    window.waterHistory = function() {
-        const hist = store.health.water.history || [];
-        let msg = '📋 喝水歷史\n';
-        hist.forEach(h => msg += `${h.date} : ${h.cups} 杯\n`);
-        alert(msg || '尚無歷史');
-    };
-
-    window.showExercise = function() {
-        let html = `<div class="flex-row"><button class="btn-icon" onclick="window.addExercise()">➕ 記錄運動</button></div>`;
-        const ex = store.health.exercises || [];
-        if (ex.length === 0) html += `<p style="color:#8a9ba8;padding:12px;">🏋️ 還沒有運動記錄</p>`;
+    window._showExercise = function() {
+        const ex = store.health.exercise || [];
+        let html = `<div class="flex-row"><button class="btn-icon" onclick="window._addExercise()">➕ 記錄運動</button></div>`;
+        if (!ex.length) html += `<p style="color:#8a9ba8;padding:12px;">🏋️ 還沒有運動記錄</p>`;
         ex.forEach((e, i) => {
-            html += `<div class="record-card">🏃 ${e.date} ${e.type} ${e.duration}分 ${e.note||''} <button class="btn-icon btn-danger" style="float:right;" onclick="window.delExercise(${i})">🗑️</button></div>`;
+            html += `<div class="record-card">🏃 ${e.date} ${e.type} ${e.duration}分鐘 ${e.note||''} <button class="btn-icon btn-danger" style="float:right;padding:2px 12px;" onclick="window._delExercise(${i})">🗑️</button></div>`;
         });
         document.getElementById('healthContent').innerHTML = html;
     };
-
-    window.addExercise = function() {
-        const token = tokenInput.value.trim();
-        if (!isValidGitHubToken(token)) { alert('請先設定有效的 Token'); return; }
-        const date = prompt('日期') || '';
-        const type = prompt('運動類型 (跑步/游泳/跳繩/其他)') || '';
+    window._addExercise = function() {
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
+        const date = prompt('日期') || new Date().toISOString().slice(0,10);
+        const type = prompt('運動類型 (跑步/游泳/跳繩/重訓/有氧/其他)') || '';
         const duration = parseInt(prompt('分鐘數')) || 0;
-        const note = prompt('備註') || '';
-        store.health.exercises.push({ date, type, duration, note });
-        saveStore(store);
-        window.showExercise();
+        const note = prompt('備註 (可空白)') || '';
+        store.health.exercise.push({ date, type, duration, note });
+        saveStore(store); window._showExercise();
     };
-
-    window.delExercise = function(idx) {
+    window._delExercise = function(i) {
         if (!confirm('確定刪除嗎？')) return;
-        store.health.exercises.splice(idx, 1);
-        saveStore(store);
-        window.showExercise();
+        store.health.exercise.splice(i, 1);
+        saveStore(store); window._showExercise();
     };
 
-    function attachEvents() {
-        // 已經用 onclick 處理了
+    function bindEvents() {
+        // 已經用 window 函數處理
     }
 
     // 初始化
     renderMain();
-    updateTokenStatus();
+    updateStatus();
 
-    // 每日重置喝水
-    function checkWaterReset() {
+    // 每日喝水重置檢查
+    setInterval(() => {
         const today = new Date().toISOString().slice(0,10);
         if (store.health.water.today.date !== today) {
             store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
             store.health.water.today = { date: today, cups: 0 };
             saveStore(store);
         }
-    }
-    setInterval(checkWaterReset, 60000);
-    checkWaterReset();
+    }, 60000);
 
-    window.addEventListener('beforeunload', function() {
-        const token = tokenInput.value.trim();
-        if (token) {
-            store.token = token;
-            localStorage.setItem(TOKEN_KEY, token);
-            saveStore(store);
-        }
+    window.addEventListener('beforeunload', () => {
+        const t = tokenInput.value.trim();
+        if (t) { store.token = t; localStorage.setItem(TOKEN_KEY, t); saveStore(store); }
     });
 })();
 </script>
