@@ -444,25 +444,8 @@
             70% { transform: scale(1.1); }
             100% { transform: scale(1); opacity: 1; }
         }
-
-        .backup-area {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .backup-area .btn {
-            font-size: 0.7rem;
-            padding: 4px 14px;
-            background: #6fbf8a;
-        }
-        .backup-area .btn-danger {
-            background: #d48a8a;
-        }
-        .backup-notice {
+        .sync-notice {
             font-size: 0.6rem;
-            color: #8a9aaa;
             text-align: center;
             padding: 4px;
             margin-top: 6px;
@@ -475,16 +458,25 @@
             color: #4a6a7a;
             margin-bottom: 6px;
         }
+        .debug-info {
+            font-size: 0.6rem;
+            color: #8a9aaa;
+            padding: 4px;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 20px;
+            margin-top: 4px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
 <div class="app" id="app">
     <div class="title">₍^˶ ╸𖥦 ╸˵^₎⟆♡</div>
 
-    <!-- Token（拿來當密碼用） -->
     <div class="token-area">
-        <input type="password" id="tokenInput" placeholder="設定你的專屬密碼" value="">
-        <button class="btn-use" id="useTokenBtn">🔑 設定</button>
+        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxx" value="">
+        <button class="btn-use" id="useTokenBtn">🔑 使用</button>
         <span class="token-status no" id="tokenStatus">未設定</span>
     </div>
 
@@ -508,20 +500,16 @@
 
     <div class="panel" id="panel"></div>
 
-    <!-- 備份區 -->
-    <div class="backup-area">
-        <button class="btn" id="exportBtn">📤 備份到手機</button>
-        <button class="btn btn-danger" id="importBtn">📥 從手機還原</button>
-        <input type="file" id="importFile" accept=".json" style="display:none;">
-    </div>
-    <div class="backup-notice">💾 資料存在手機裡，換手機時用備份/還原即可</div>
+    <div class="sync-notice" id="syncNotice">☁️ 自動同步已開啟</div>
+    <div class="debug-info" id="debugInfo"></div>
 </div>
 
 <script>
 (function() {
     // ========== 儲存 ==========
-    const STORE_KEY = 'cherry_local_data';
-    const TOKEN_KEY = 'cherry_local_token';
+    const STORE_KEY = 'cherry_data_final';
+    const TOKEN_KEY = 'cherry_token_final';
+    const GIST_ID_KEY = 'cherry_gist_id_final';
 
     function encode(s) { return btoa(encodeURIComponent(s)); }
     function decode(s) { try { return decodeURIComponent(atob(s)); } catch(e) { return null; } }
@@ -537,6 +525,8 @@
             return JSON.parse(decode(raw));
         } catch(e) { return null; }
     }
+
+    function validToken(t) { return /^ghp_[A-Za-z0-9]{36,40}$/.test(t); }
 
     const SUBJECTS = ['宗教','公民','語文','英文','數學','中國歷史','世界歷史','地理','物理','化學','生物','資訊科技','體育','音樂','藝術','其他'];
     const WEATHER_EMOJIS = { '☀️': '晴', '⛅': '多雲', '☁️': '陰', '🌧️': '雨', '❄️': '雪' };
@@ -583,67 +573,171 @@
     const photoStrip = document.getElementById('photoStrip');
     const photoCount = document.getElementById('photoCount');
     const panel = document.getElementById('panel');
+    const syncNotice = document.getElementById('syncNotice');
+    const debugInfo = document.getElementById('debugInfo');
     tokenInput.value = store.token || '';
 
-    // ========== Token（密碼） ==========
+    function setDebug(msg) {
+        debugInfo.textContent = msg;
+        console.log('[Debug]', msg);
+    }
+
+    // ========== Token ==========
     document.getElementById('useTokenBtn').addEventListener('click', function() {
         const t = tokenInput.value.trim();
-        if (!t) { alert('請輸入你的專屬密碼'); return; }
+        if (!t) { alert('請輸入 Token'); return; }
+        if (!validToken(t)) { alert('Token 格式錯誤'); return; }
         store.token = t;
         localStorage.setItem(TOKEN_KEY, t);
         saveLocal();
         updateTokenStatus();
-        alert('✅ 密碼已設定！');
+        alert('✅ Token 已設定！');
         renderMain();
+        setTimeout(() => { autoSync(); }, 3000);
     });
 
     function updateTokenStatus() {
         const t = tokenInput.value.trim();
         if (!t) { tokenStatus.textContent = '未設定'; tokenStatus.className = 'token-status no'; }
-        else { tokenStatus.textContent = '✅ 已設定'; tokenStatus.className = 'token-status ok'; }
+        else if (validToken(t)) { tokenStatus.textContent = '✅ 有效'; tokenStatus.className = 'token-status ok'; }
+        else { tokenStatus.textContent = '⚠️ 格式錯誤'; tokenStatus.className = 'token-status no'; }
     }
     updateTokenStatus();
 
-    // ========== 備份/還原 ==========
-    document.getElementById('exportBtn').addEventListener('click', function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
-        const data = localStorage.getItem(STORE_KEY);
-        if (!data) { alert('沒有資料可備份'); return; }
-        const blob = new Blob([data], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `cherry_backup_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        alert('✅ 備份成功！檔案已下載');
-    });
+    // ========== 同步（repo token 可用於 Gist） ==========
+    let isSyncing = false;
 
-    document.getElementById('importBtn').addEventListener('click', function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
-        document.getElementById('importFile').click();
-    });
+    async function autoSync() {
+        const token = tokenInput.value.trim();
+        if (!validToken(token)) {
+            setDebug('Token 無效');
+            return;
+        }
 
-    document.getElementById('importFile').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            try {
-                const data = ev.target.result;
-                JSON.parse(decode(data) || '{}');
-                localStorage.setItem(STORE_KEY, data);
-                alert('✅ 還原成功！重新整理頁面');
-                location.reload();
-            } catch(err) {
-                alert('❌ 檔案格式錯誤，請確認是正確的備份檔');
+        if (isSyncing) return;
+        isSyncing = true;
+        syncNotice.textContent = '☁️ 同步中...';
+        syncNotice.style.color = '#856404';
+        setDebug('開始同步...');
+
+        try {
+            const syncData = JSON.parse(JSON.stringify(store));
+            syncData.photos = [];
+            const dataStr = JSON.stringify(syncData);
+
+            let gistId = localStorage.getItem(GIST_ID_KEY);
+
+            let url = 'https://api.github.com/gists';
+            let method = 'POST';
+            let body = {
+                description: 'Cherry App Data',
+                public: false,
+                files: { 'data.json': { content: dataStr } }
+            };
+
+            if (gistId) {
+                url = `https://api.github.com/gists/${gistId}`;
+                method = 'PATCH';
+                body = { files: { 'data.json': { content: dataStr } } };
             }
-        };
-        reader.readAsText(file);
-        this.value = '';
-    });
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || '同步失敗');
+            }
+
+            const result = await response.json();
+            if (!gistId) {
+                localStorage.setItem(GIST_ID_KEY, result.id);
+            }
+
+            syncNotice.textContent = '☁️ 已同步 ✓';
+            syncNotice.style.color = '#155724';
+            setDebug('✅ 同步成功！');
+
+        } catch(e) {
+            syncNotice.textContent = '☁️ 同步失敗';
+            syncNotice.style.color = '#721c24';
+            setDebug('❌ ' + e.message);
+        }
+        isSyncing = false;
+    }
+
+    async function loadFromGist() {
+        const token = tokenInput.value.trim();
+        if (!validToken(token)) return;
+
+        const gistId = localStorage.getItem(GIST_ID_KEY);
+        if (!gistId) {
+            setTimeout(() => { autoSync(); }, 5000);
+            return;
+        }
+
+        try {
+            const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    localStorage.removeItem(GIST_ID_KEY);
+                }
+                return;
+            }
+
+            const result = await response.json();
+            const content = result.files['data.json']?.content;
+            if (!content) return;
+
+            const remoteData = JSON.parse(content);
+            const localPhotos = store.photos || [];
+
+            store = remoteData;
+            store.photos = localPhotos;
+
+            if (!store.study.grades) store.study.grades = {};
+            ALL_SEMESTERS.forEach(s => {
+                if (!store.study.grades[s]) store.study.grades[s] = {};
+            });
+            if (!store.study.calendar) store.study.calendar = [];
+            if (!store.study.todos) store.study.todos = [];
+            if (!store.diary.entries) store.diary.entries = [];
+            if (!store.health.bmi) store.health.bmi = [];
+            if (!store.health.water) store.health.water = { today: { date: '', cups: 0 }, history: [] };
+            if (!store.health.exercise) store.health.exercise = [];
+
+            saveLocal();
+            renderPhotoStrip();
+            renderMain();
+            syncNotice.textContent = '☁️ 已從雲端載入 ✓';
+            syncNotice.style.color = '#155724';
+            setDebug('✅ 載入成功！');
+
+        } catch(e) {
+            setDebug('❌ 載入失敗: ' + e.message);
+        }
+    }
+
+    function saveAndSync() {
+        saveLocal();
+        if (window._syncTimer) clearTimeout(window._syncTimer);
+        window._syncTimer = setTimeout(() => {
+            autoSync();
+        }, 3000);
+    }
 
     // ========== 照片 ==========
     function renderPhotoStrip() {
@@ -677,7 +771,7 @@
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     store.photos.push({ id: Date.now(), data: ev.target.result, date: new Date().toISOString().slice(0,10) });
-                    saveLocal();
+                    saveAndSync();
                     renderPhotoStrip();
                     renderMain();
                 };
@@ -886,8 +980,7 @@
     window._changeMonth = changeMonth;
 
     window._addEvent = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         showModal('新增行程', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'subject', label: '科目 (可選填)', type: 'text', placeholder: '例如：數學' },
@@ -899,7 +992,7 @@
                 subject: result.subject || '',
                 content: result.content
             });
-            saveLocal();
+            saveAndSync();
             renderMain();
         });
     };
@@ -918,7 +1011,7 @@
     window._delEvent = function(date, content, subject) {
         if (!confirm('刪除這個行程？')) return;
         const idx = store.study.calendar.findIndex(e => e.date === date && e.content === content && (e.subject||'') === (subject||''));
-        if (idx > -1) { store.study.calendar.splice(idx,1); saveLocal(); renderMain(); }
+        if (idx > -1) { store.study.calendar.splice(idx,1); saveAndSync(); renderMain(); }
     };
 
     // ----- 備忘錄 -----
@@ -933,14 +1026,13 @@
     }
 
     window._addTodo = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         showModal('新增待辦', [
             { key: 'text', label: '待辦事項', type: 'text', placeholder: '輸入事項' }
         ], function(result) {
             if (!result.text) { alert('請輸入內容'); return; }
             store.study.todos.push({ id: Date.now(), text: result.text, done: false });
-            saveLocal();
+            saveAndSync();
             renderMain();
         });
     };
@@ -948,7 +1040,7 @@
     window._toggleTodo = function(i) {
         store.study.todos[i].done = !store.study.todos[i].done;
         if (store.study.todos[i].done) store.study.todos.splice(i, 1);
-        saveLocal();
+        saveAndSync();
         renderMain();
     };
 
@@ -993,8 +1085,7 @@
     window._switchSubject = switchSubject;
 
     window._addGrade = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         const sem = ALL_SEMESTERS[currentSemesterIdx];
         const sub = currentSubject;
         showModal('新增成績', [
@@ -1010,7 +1101,7 @@
             const records = store.study.grades[sem][sub];
             const prev = records.length > 0 ? records[records.length-1].score : null;
             records.push({ date: result.date, score, note: result.note || '' });
-            saveLocal();
+            saveAndSync();
             renderMain();
             if (prev !== null) {
                 if (score > prev) showSticker('🎉', '進步了！繼續加油！');
@@ -1027,7 +1118,7 @@
         if (store.study.grades[sem]?.[sub]) {
             store.study.grades[sem][sub].splice(idx, 1);
             if (!store.study.grades[sem][sub].length) delete store.study.grades[sem][sub];
-            saveLocal();
+            saveAndSync();
             renderMain();
         }
     };
@@ -1071,8 +1162,7 @@
     }
 
     window._addDiary = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         showModal('新增日記', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'weather', label: '天氣', type: 'weather', value: '☀️' },
@@ -1090,7 +1180,7 @@
                 content: result.content,
                 image: lastPhoto
             });
-            saveLocal();
+            saveAndSync();
             renderMain();
         });
     };
@@ -1110,7 +1200,7 @@
             entry.weather = result.weather || entry.weather;
             entry.mood = result.mood || entry.mood;
             entry.content = result.content || entry.content;
-            saveLocal();
+            saveAndSync();
             renderMain();
         });
     };
@@ -1120,7 +1210,7 @@
         const pwd = prompt('🔒 請輸入密碼');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         const idx = store.diary.entries.findIndex(e => e.id === id);
-        if (idx > -1) { store.diary.entries.splice(idx, 1); saveLocal(); renderMain(); }
+        if (idx > -1) { store.diary.entries.splice(idx, 1); saveAndSync(); renderMain(); }
     };
 
     window._searchDiary = function() {
@@ -1167,8 +1257,7 @@
     window._showBMI = function() { document.getElementById('healthContent').innerHTML = renderBMI(); };
 
     window._addBMI = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         showModal('記錄健康程度', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'height', label: '身高 (cm)', type: 'number', placeholder: '輸入身高' },
@@ -1186,7 +1275,7 @@
             const records = store.health.bmi;
             const prev = records.length > 0 ? records[records.length-1].status : null;
             records.push({ date: result.date, height: h, weight: w, bmi: bmi.toFixed(1), status });
-            saveLocal();
+            saveAndSync();
             window._showBMI();
             if (prev) {
                 const prevVal = STATUS_ORDER[prev] || 2;
@@ -1205,14 +1294,14 @@
         const pwd = prompt('🔒 請輸入密碼');
         if (pwd !== 'cherry') { alert('密碼錯誤'); return; }
         store.health.bmi.splice(i,1);
-        saveLocal();
+        saveAndSync();
         window._showBMI();
     };
 
     window._showWater = function() {
         const today = new Date().toISOString().slice(0,10);
         const w = store.health.water;
-        if (w.today.date !== today) { w.today = { date: today, cups: 0 }; saveLocal(); }
+        if (w.today.date !== today) { w.today = { date: today, cups: 0 }; saveAndSync(); }
         let html = `<div class="cups">`;
         for (let i=0; i<8; i++) {
             html += `<div class="cup ${i<w.today.cups?'filled':''}" onclick="window._addCup(${i})">${i<w.today.cups?'💧':'🥤'}</div>`;
@@ -1225,7 +1314,7 @@
         const w = store.health.water;
         if (idx < w.today.cups) return;
         w.today.cups = Math.min(8, idx+1);
-        saveLocal();
+        saveAndSync();
         window._showWater();
     };
     window._resetWater = function() {
@@ -1233,7 +1322,7 @@
         const w = store.health.water;
         w.history.push({ date: w.today.date, cups: w.today.cups });
         w.today = { date: new Date().toISOString().slice(0,10), cups: 0 };
-        saveLocal();
+        saveAndSync();
         window._showWater();
     };
     window._waterHistory = function() {
@@ -1254,8 +1343,7 @@
     };
 
     window._addExercise = function() {
-        const t = tokenInput.value.trim();
-        if (!t) { alert('請先設定密碼'); return; }
+        if (!validToken(tokenInput.value.trim())) { alert('請先設定 Token'); return; }
         showModal('記錄運動', [
             { key: 'date', label: '日期', type: 'date', value: new Date().toISOString().slice(0,10) },
             { key: 'type', label: '運動類型', type: 'text', placeholder: '跑步/游泳/跳繩/重訓' },
@@ -1264,19 +1352,27 @@
         ], function(result) {
             if (!result.type || !result.duration) { alert('請填寫完整'); return; }
             store.health.exercise.push({ date: result.date, type: result.type, duration: parseInt(result.duration)||0, note: result.note||'' });
-            saveLocal();
+            saveAndSync();
             window._showExercise();
         });
     };
     window._delExercise = function(i) {
         if (!confirm('刪除這筆紀錄？')) return;
         store.health.exercise.splice(i,1);
-        saveLocal();
+        saveAndSync();
         window._showExercise();
     };
 
     // ========== 初始化 ==========
-    renderMain();
+    loadFromGist().then(() => {
+        renderMain();
+        // 每 10 分鐘自動同步一次
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                autoSync();
+            }
+        }, 600000);
+    });
 
     // 每日喝水重置
     setInterval(() => {
@@ -1284,16 +1380,17 @@
         if (store.health.water.today.date !== today) {
             store.health.water.history.push({ date: store.health.water.today.date, cups: store.health.water.today.cups });
             store.health.water.today = { date: today, cups: 0 };
-            saveLocal();
+            saveAndSync();
         }
     }, 60000);
 
     window.addEventListener('beforeunload', () => {
         const t = tokenInput.value.trim();
-        if (t) { store.token = t; localStorage.setItem(TOKEN_KEY, t); saveLocal(); }
+        if (t && validToken(t)) { store.token = t; localStorage.setItem(TOKEN_KEY, t); saveLocal(); }
     });
 
     // 暴露函數
+    window._manualSync = autoSync;
     window._switchSub = switchSub;
     window._switchSubject = switchSubject;
     window._changeMonth = changeMonth;
